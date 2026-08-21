@@ -8,6 +8,8 @@ htmlcov/
 
 # Env / secrets
 .env
+backend/.env
+backend/secrets/
 *.pem
 
 # Virtual envs
