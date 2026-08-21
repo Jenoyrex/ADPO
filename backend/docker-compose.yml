@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: adpo
+      POSTGRES_PASSWORD: adpo
+      POSTGRES_DB: adpo
+    ports:
+      # Host port 5433 (not 5432) to avoid colliding with any other local
+      # Postgres instance already using the default port.
+      - "5433:5432"
+    volumes:
+      - adpo_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adpo -d adpo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  adpo_pg_data:
