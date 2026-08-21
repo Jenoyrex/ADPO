@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Env / secrets
+.env
+*.pem
+
+# Virtual envs
+.venv/
+.venv*/
+venv/
+
+# Logs / local run artifacts
+*.log
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Node (frontend, future)
+node_modules/
