@@ -38,9 +38,9 @@ jobs:
         with:
           python-version: "3.11"
           cache: "pip"
-      - name: Install backend dependencies
+      - name: pip install backend deps (adpo probe, temporary)
         working-directory: backend
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev]" && sleep 20
       - name: Run backend test suite
         working-directory: backend
         run: pytest -v
