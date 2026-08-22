@@ -96,3 +96,13 @@ jobs:
             exit 1
           fi
           echo "Probe OK - no controlled-failure condition matched for this commit/attempt."
+
+  regression-probe:
+    name: Historical regression probe (controlled, temporary, for ADPO analyzer testing)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Controlled duration step
+        run: |
+          echo "Baseline duration for ADPO historical-regression testing."
+          sleep 10
+          echo "Done."
