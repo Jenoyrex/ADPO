@@ -43,3 +43,12 @@ npm run test
 ```
 
 Vitest + React Testing Library.
+
+## Deployment
+
+`npm run build` outputs a static `dist/` - this is a client-side-routed SPA
+(React Router), so whichever host serves it needs to rewrite every path to
+`/index.html` (otherwise a direct visit or refresh on e.g. `/repositories/1`
+404s). `vercel.json` already declares this rewrite for a Vercel deployment;
+adjust or replace it if deploying elsewhere (e.g. Netlify's `_redirects`
+with `/* /index.html 200`).

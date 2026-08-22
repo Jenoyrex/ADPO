@@ -92,6 +92,24 @@ uvicorn app.main:app --reload
 Then visit `http://localhost:8000/health`, and start the login flow at
 `http://localhost:8000/api/v1/auth/github/login`.
 
+## Running in production
+
+Never run with `--reload` in production (it's a dev-only file-watcher).
+Install from the pinned lockfile (`requirements-lock.txt`) for a
+reproducible set of dependency versions, then start with a fixed worker
+count and no auto-reload:
+
+```bash
+pip install -e ../analyzer
+pip install -r requirements-lock.txt
+alembic upgrade head
+uvicorn app.main:app --host 0.0.0.0 --port "$PORT" --workers 2
+```
+
+Set `ENVIRONMENT=production` so the session cookie is marked `Secure`, and
+set `ALLOWED_HOSTS` to the backend's own public hostname(s) to enable
+`TrustedHostMiddleware`. See `.env.example` for every variable this needs.
+
 ## Running the tests
 
 ```bash
