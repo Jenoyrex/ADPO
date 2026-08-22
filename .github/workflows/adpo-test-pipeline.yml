@@ -103,6 +103,6 @@ jobs:
     steps:
       - name: Controlled duration step
         run: |
-          echo "Baseline duration for ADPO historical-regression testing."
-          sleep 10
+          echo "Regressed duration for ADPO historical-regression testing."
+          sleep 40
           echo "Done."
