@@ -1,0 +1,4 @@
+dist/
+vite-dev.log
+.env.local
+*.tsbuildinfo
