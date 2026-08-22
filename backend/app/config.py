@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     environment: str = "development"
     secret_key: str = "dev-only-insecure-secret-key"
     cors_origins: str = "http://localhost:3000"
+    # Comma-separated list of Host headers TrustedHostMiddleware will accept.
+    # Empty (the default) means the middleware is not added at all, so local
+    # dev/tests are unaffected until this is explicitly set for production.
+    allowed_hosts: str = ""
 
     # --- Database ---
     database_url: str = "postgresql+psycopg://adpo:adpo@localhost:5433/adpo"
@@ -43,6 +47,10 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def allowed_hosts_list(self) -> list[str]:
+        return [h.strip() for h in self.allowed_hosts.split(",") if h.strip()]
 
     @property
     def github_app_private_key_pem(self) -> str:

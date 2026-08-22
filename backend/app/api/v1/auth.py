@@ -15,10 +15,16 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, get_db
 from app.config import Settings, get_settings
 from app.core.logging import get_logger, log_extra
-from app.core.security import SESSION_COOKIE_NAME, create_session_cookie, encrypt_token
+from app.core.security import (
+    SESSION_COOKIE_NAME,
+    SESSION_MAX_AGE_SECONDS,
+    create_session_cookie,
+    encrypt_token,
+)
 from app.models.github_account import GitHubInstallation, GitHubToken
 from app.models.user import User
 from app.schemas.user import UserOut
+from app.services.github.app_auth import build_app_jwt, get_installation_token
 from app.services.github.client import GitHubClient
 from app.services.github.exceptions import GitHubError
 
@@ -56,15 +62,50 @@ def github_login(settings: Settings = Depends(get_settings)) -> Response:
 
 @router.get("/github/callback")
 def github_callback(
-    code: str,
-    state: str,
     request: Request,
+    code: str,
+    state: str | None = None,
+    installation_id: int | None = None,
+    setup_action: str = "install",
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ) -> Response:
+    """Handles two distinct redirects GitHub sends to this one Callback URL:
+
+    A. Normal login, initiated by our own /github/login: carries `code` +
+       `state`, and the browser carries the `adpo_oauth_state` cookie that
+       /github/login set. Validated with the existing signed-state check.
+
+    B. GitHub App installation, when "Request user authorization (OAuth)
+       during installation" is enabled and no separate Setup URL is
+       configured: GitHub appends `installation_id` + `setup_action` to
+       this same Callback URL. This leg never went through /github/login,
+       so there is no `state` and no `adpo_oauth_state` cookie - by design,
+       not by omission.
+
+    Flow B deliberately does NOT use its `code` to establish or switch who
+    is logged in: doing so would let an attacker complete their own
+    installation/OAuth grant, then trick a *different*, already-logged-in
+    victim into opening the resulting callback URL, silently switching the
+    victim's session to the attacker's identity (the exact login-CSRF hole
+    `state` exists to close). Instead, flow B requires the browser's
+    existing ADPO session - the same trust anchor the standalone
+    /github/installation/callback endpoint already relies on - and only
+    links the installation to that already-authenticated user.
+    """
     cookie_state = request.cookies.get(STATE_COOKIE_NAME)
+
+    if installation_id is not None and state is None and cookie_state is None:
+        user = get_current_user(request, db, settings)
+        _link_installation(db, settings, installation_id=installation_id, setup_action=setup_action, acting_user=user)
+        redirect = Response(status_code=status.HTTP_302_FOUND)
+        redirect.headers["Location"] = settings.frontend_success_redirect_url
+        return redirect
+
     if not cookie_state:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "missing oauth state cookie")
+    if not state:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "missing oauth state parameter")
     try:
         expected_state = _state_serializer(settings).loads(cookie_state, max_age=STATE_MAX_AGE_SECONDS)
     except BadSignature as exc:
@@ -73,17 +114,33 @@ def github_callback(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "oauth state mismatch (possible CSRF)")
 
     with httpx.Client(timeout=15.0) as http:
-        token_response = http.post(
-            "https://github.com/login/oauth/access_token",
-            headers={"Accept": "application/json"},
-            data={
-                "client_id": settings.github_app_client_id,
-                "client_secret": settings.github_app_client_secret,
-                "code": code,
-                "redirect_uri": settings.github_oauth_redirect_uri,
-            },
+        try:
+            token_response = http.post(
+                "https://github.com/login/oauth/access_token",
+                headers={"Accept": "application/json"},
+                data={
+                    "client_id": settings.github_app_client_id,
+                    "client_secret": settings.github_app_client_secret,
+                    "code": code,
+                    "redirect_uri": settings.github_oauth_redirect_uri,
+                },
+            )
+        except httpx.HTTPError as exc:
+            logger.warning("github oauth token exchange request failed", extra=log_extra(error=str(exc)))
+            raise HTTPException(
+                status.HTTP_502_BAD_GATEWAY, "could not reach GitHub to complete sign-in"
+            ) from exc
+
+    try:
+        token_data = token_response.json()
+    except ValueError as exc:
+        logger.warning(
+            "github oauth token exchange returned a non-JSON response",
+            extra=log_extra(status_code=token_response.status_code),
         )
-    token_data = token_response.json()
+        raise HTTPException(
+            status.HTTP_502_BAD_GATEWAY, "GitHub returned an unexpected response during sign-in"
+        ) from exc
     if "error" in token_data:
         logger.warning("github oauth exchange failed", extra=log_extra(error=token_data.get("error")))
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"GitHub OAuth error: {token_data['error']}")
@@ -125,11 +182,27 @@ def github_callback(
 
     db.commit()
 
+    # GitHub also appends installation_id to *this* branch's redirect when a
+    # user installs the App from a fresh, not-yet-authenticated browser (no
+    # prior /github/login) - in that case the just-resolved OAuth identity
+    # above is who should own the installation.
+    if installation_id is not None:
+        _link_installation(db, settings, installation_id=installation_id, setup_action=setup_action, acting_user=user)
+
     session_cookie = create_session_cookie(user.id)
     redirect = Response(status_code=status.HTTP_302_FOUND)
     redirect.headers["Location"] = settings.frontend_success_redirect_url
     redirect.delete_cookie(STATE_COOKIE_NAME)
-    redirect.set_cookie(SESSION_COOKIE_NAME, session_cookie, httponly=True, samesite="lax", secure=False)
+    redirect.set_cookie(
+        SESSION_COOKIE_NAME,
+        session_cookie,
+        max_age=SESSION_MAX_AGE_SECONDS,
+        httponly=True,
+        samesite="lax",
+        # Secure in production (HTTPS is a hard requirement there); off in
+        # local dev so the cookie still works over plain http://localhost.
+        secure=settings.environment == "production",
+    )
     return redirect
 
 
@@ -155,36 +228,79 @@ def github_installation_callback(
     settings: Settings = Depends(get_settings),
     user: User = Depends(get_current_user),
 ) -> Response:
+    _link_installation(db, settings, installation_id=installation_id, setup_action=setup_action, acting_user=user)
+    redirect = Response(status_code=status.HTTP_302_FOUND)
+    redirect.headers["Location"] = settings.frontend_success_redirect_url
+    return redirect
+
+
+def _link_installation(
+    db: Session,
+    settings: Settings,
+    *,
+    installation_id: int,
+    setup_action: str,
+    acting_user: User,
+) -> GitHubInstallation | None:
+    """Verifies a GitHub App installation via the App JWT / installation-token
+    mechanisms and upserts the corresponding `GitHubInstallation` row, linked
+    to `acting_user`. Shared by both the standalone installation callback and
+    the installation-triggered leg of the combined OAuth callback, so the
+    verify/link logic exists in exactly one place.
+
+    Returns `None` without touching the database for `setup_action` values
+    other than "install"/"update" (e.g. "request", which just means an org
+    member asked an owner to approve the install - nothing to link yet).
+    Never persists the installation access token minted to verify access.
+    """
     if setup_action not in ("install", "update"):
-        redirect = Response(status_code=status.HTTP_302_FOUND)
-        redirect.headers["Location"] = settings.frontend_success_redirect_url
-        return redirect
+        return None
 
     installation = db.execute(
         select(GitHubInstallation).where(GitHubInstallation.installation_id == installation_id)
     ).scalar_one_or_none()
 
     try:
-        with GitHubClient(
-            _mint_installation_token_for_setup(settings, installation_id), base_url=settings.github_api_base_url
-        ):
-            pass  # token mint succeeding is enough to prove the installation is valid
+        with GitHubClient(get_installation_token(settings, installation_id), base_url=settings.github_api_base_url):
+            pass  # token mint succeeding is enough to prove the installation is valid/reachable
     except GitHubError as exc:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"could not verify installation: {exc}") from exc
 
     with httpx.Client(timeout=15.0) as http:
-        app_jwt_response = http.get(
-            f"{settings.github_api_base_url}/app/installations/{installation_id}",
-            headers={"Authorization": f"Bearer {_app_jwt(settings)}", "Accept": "application/vnd.github+json"},
+        try:
+            app_jwt_response = http.get(
+                f"{settings.github_api_base_url}/app/installations/{installation_id}",
+                headers={
+                    "Authorization": f"Bearer {build_app_jwt(settings)}",
+                    "Accept": "application/vnd.github+json",
+                },
+            )
+        except httpx.HTTPError as exc:
+            logger.warning(
+                "github installation lookup request failed",
+                extra=log_extra(installation_id=installation_id, error=str(exc)),
+            )
+            raise HTTPException(
+                status.HTTP_502_BAD_GATEWAY, "could not reach GitHub to verify the installation"
+            ) from exc
+
+    try:
+        account = app_jwt_response.json().get("account", {})
+    except ValueError as exc:
+        logger.warning(
+            "github installation lookup returned a non-JSON response",
+            extra=log_extra(installation_id=installation_id, status_code=app_jwt_response.status_code),
         )
-    account = app_jwt_response.json().get("account", {})
+        raise HTTPException(
+            status.HTTP_502_BAD_GATEWAY, "GitHub returned an unexpected response while verifying the installation"
+        ) from exc
 
     if installation is None:
         installation = GitHubInstallation(
             installation_id=installation_id,
             account_login=account.get("login", "unknown"),
             account_type=account.get("type", "User"),
-            connected_by_user_id=user.id,
+            connected_by_user_id=acting_user.id,
         )
         db.add(installation)
     else:
@@ -192,22 +308,7 @@ def github_installation_callback(
         installation.account_type = account.get("type", installation.account_type)
 
     db.commit()
-
-    redirect = Response(status_code=status.HTTP_302_FOUND)
-    redirect.headers["Location"] = settings.frontend_success_redirect_url
-    return redirect
-
-
-def _app_jwt(settings: Settings) -> str:
-    from app.services.github.app_auth import build_app_jwt
-
-    return build_app_jwt(settings)
-
-
-def _mint_installation_token_for_setup(settings: Settings, installation_id: int) -> str:
-    from app.services.github.app_auth import get_installation_token
-
-    return get_installation_token(settings, installation_id)
+    return installation
 
 
 @router.get("/me", response_model=UserOut)
