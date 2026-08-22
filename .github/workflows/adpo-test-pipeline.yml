@@ -73,8 +73,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Intentional slower validation step
         run: |
-          echo "Running a deliberately slower step (temporarily bumped for ADPO slow-job threshold testing) so ADPO's analyzers have real duration data to ingest."
-          sleep 195
+          echo "Running a deliberately slower step so ADPO's slow-step/slow-job analyzers have real duration data to ingest."
+          sleep 40
           echo "Slower step complete."
       - name: Final summary
         run: echo "Backend and analyzer suites passed; pipeline complete."
