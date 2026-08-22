@@ -78,3 +78,21 @@ jobs:
           echo "Slower step complete."
       - name: Final summary
         run: echo "Backend and analyzer suites passed; pipeline complete."
+
+  flaky-probe:
+    name: Failure/retry probe (controlled, for ADPO analyzer testing)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simulate controlled failure signal
+        run: |
+          MSG="${{ github.event.head_commit.message }}"
+          echo "Commit message: $MSG"
+          if echo "$MSG" | grep -q "adpo-probe-permanent-fail"; then
+            echo "Intentionally failing (single attempt, will not be rerun) to give ADPO's failure/retry analyzer one real failure data point."
+            exit 1
+          fi
+          if echo "$MSG" | grep -q "adpo-probe-retry-fail" && [ "${{ github.run_attempt }}" = "1" ]; then
+            echo "Intentionally failing on first attempt only, to give ADPO's failure/retry analyzer one real retry data point."
+            exit 1
+          fi
+          echo "Probe OK - no controlled-failure condition matched for this commit/attempt."
