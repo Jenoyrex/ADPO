@@ -215,6 +215,16 @@ class GitHubClient:
             path = f"/repos/{owner}/{repo}/actions/runs/{run_id}/jobs"
         return list(self._paginate(path))
 
+    def get_workflow_run_attempt(self, owner: str, repo: str, run_id: int, run_attempt: int) -> dict[str, Any]:
+        """GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{run_attempt}
+        - run-level metadata (status/conclusion/timestamps) for one specific,
+        possibly-superseded attempt. `list_workflow_runs` only ever reflects
+        each run's *current* (latest) attempt, so a rerun's earlier attempt(s)
+        can only be recovered through this per-attempt endpoint."""
+        return self._request(
+            "GET", f"/repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{run_attempt}"
+        ).json()
+
 
 def _first_list_value(payload: dict[str, Any]) -> list[dict[str, Any]]:
     for value in payload.values():

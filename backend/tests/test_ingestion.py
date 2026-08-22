@@ -74,7 +74,7 @@ def _step(number, name="Checkout"):
     }
 
 
-def _run(run_id, workflow_id, run_number=1, run_attempt=1, branch="main"):
+def _run(run_id, workflow_id, run_number=1, run_attempt=1, branch="main", conclusion="success"):
     return {
         "id": run_id,
         "workflow_id": workflow_id,
@@ -83,7 +83,7 @@ def _run(run_id, workflow_id, run_number=1, run_attempt=1, branch="main"):
         "head_branch": branch,
         "event": "push",
         "status": "completed",
-        "conclusion": "success",
+        "conclusion": conclusion,
         "created_at": "2024-01-01T00:00:00Z",
         "updated_at": "2024-01-01T00:06:00Z",
     }
@@ -192,6 +192,70 @@ def test_sync_stores_rerun_attempts_separately(db_session, installation):
     runs = db_session.execute(select(WorkflowRun).where(WorkflowRun.github_run_id == 100)).scalars().all()
     assert {r.run_attempt for r in runs} == {1, 2}
     assert {r.jobs[0].github_job_id for r in runs} == {1000, 1001}
+
+
+def test_sync_backfills_superseded_attempt_from_realistic_listing(db_session, installation):
+    """Unlike the test above, this simulates GitHub's REAL behavior:
+    `list_workflow_runs` yields only ONE entry per run_id, reflecting just
+    the current (latest) attempt - it never returns superseded attempts
+    directly. The sync must independently discover and fetch attempt 1
+    via `get_workflow_run_attempt` + `list_jobs_for_run(run_attempt=1)`."""
+    repo = _make_repository(db_session, installation)
+
+    class RerunGitHubClient(FakeGitHubClient):
+        def get_workflow_run_attempt(self, owner, repo, run_id, run_attempt):
+            return _run(run_id, workflow_id=1, run_attempt=run_attempt, conclusion="failure")
+
+        def list_jobs_for_run(self, owner, repo, run_id, run_attempt=None):
+            job_id = 1000 if run_attempt == 1 else 1001
+            return [_job(job_id)]
+
+    client = RerunGitHubClient(
+        workflows=[{"id": 1, "name": "CI", "path": ".github/workflows/ci.yml", "state": "active"}],
+        runs=[_run(100, workflow_id=1, run_attempt=2, conclusion="success")],
+        jobs_by_run_id={},
+    )
+
+    result = sync_repository(db_session, repo, client)
+
+    assert result.status == "completed"
+    assert result.runs_synced == 2  # the latest attempt + the backfilled attempt 1
+    runs = db_session.execute(select(WorkflowRun).where(WorkflowRun.github_run_id == 100)).scalars().all()
+    by_attempt = {r.run_attempt: r for r in runs}
+    assert set(by_attempt) == {1, 2}
+    assert by_attempt[1].conclusion == "failure"
+    assert by_attempt[2].conclusion == "success"
+    assert by_attempt[1].jobs[0].github_job_id == 1000
+    assert by_attempt[2].jobs[0].github_job_id == 1001
+
+
+def test_sync_does_not_refetch_already_stored_superseded_attempts(db_session, installation):
+    """A superseded attempt is immutable once complete, so a second sync
+    of the same repo must not call `get_workflow_run_attempt` again for
+    an attempt already stored - only new attempts should be fetched."""
+    repo = _make_repository(db_session, installation)
+    fetch_calls: list[int] = []
+
+    class RerunGitHubClient(FakeGitHubClient):
+        def get_workflow_run_attempt(self, owner, repo, run_id, run_attempt):
+            fetch_calls.append(run_attempt)
+            return _run(run_id, workflow_id=1, run_attempt=run_attempt, conclusion="failure")
+
+        def list_jobs_for_run(self, owner, repo, run_id, run_attempt=None):
+            job_id = 1000 if run_attempt == 1 else 1001
+            return [_job(job_id)]
+
+    client = RerunGitHubClient(
+        workflows=[{"id": 1, "name": "CI", "path": ".github/workflows/ci.yml", "state": "active"}],
+        runs=[_run(100, workflow_id=1, run_attempt=2, conclusion="success")],
+        jobs_by_run_id={},
+    )
+
+    sync_repository(db_session, repo, client)
+    assert fetch_calls == [1]
+
+    sync_repository(db_session, repo, client)
+    assert fetch_calls == [1]  # unchanged - attempt 1 was already stored, not refetched
 
 
 def test_sync_handles_missing_jobs_without_aborting_whole_sync(db_session, installation):

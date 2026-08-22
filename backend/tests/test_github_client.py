@@ -196,3 +196,14 @@ def test_list_jobs_for_run_uses_attempt_scoped_path_when_given():
         jobs = client.list_jobs_for_run("octo", "widgets", 55, run_attempt=2)
 
     assert jobs == [{"id": 1}]
+
+
+@respx.mock
+def test_get_workflow_run_attempt_uses_attempt_scoped_path():
+    url = f"{BASE}/repos/octo/widgets/actions/runs/55/attempts/1"
+    respx.get(url).mock(return_value=httpx.Response(200, json={"id": 55, "run_attempt": 1, "conclusion": "failure"}))
+
+    with GitHubClient("tok", base_url=BASE) as client:
+        run = client.get_workflow_run_attempt("octo", "widgets", 55, 1)
+
+    assert run == {"id": 55, "run_attempt": 1, "conclusion": "failure"}
