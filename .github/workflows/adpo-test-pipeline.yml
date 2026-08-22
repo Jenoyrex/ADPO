@@ -1,0 +1,80 @@
+name: ADPO Test Pipeline
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  install-deps:
+    name: Install dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -e ".[dev]"
+      - name: Install analyzer dependencies
+        working-directory: analyzer
+        run: pip install -e ".[dev]"
+      - name: Show installed packages
+        run: pip list
+
+  backend-tests:
+    name: Backend tests
+    needs: install-deps
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -e ".[dev]"
+      - name: Run backend test suite
+        working-directory: backend
+        run: pytest -v
+
+  analyzer-tests:
+    name: Analyzer tests
+    needs: install-deps
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install analyzer dependencies
+        working-directory: analyzer
+        run: pip install -e ".[dev]"
+      - name: Run analyzer test suite
+        working-directory: analyzer
+        run: pytest -v
+
+  slow-integration-check:
+    name: Slow integration check
+    needs: [backend-tests, analyzer-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Intentional slower validation step
+        run: |
+          echo "Running a deliberately slower step so ADPO's slow-step/slow-job analyzers have real duration data to ingest."
+          sleep 40
+          echo "Slower step complete."
+      - name: Final summary
+        run: echo "Backend and analyzer suites passed; pipeline complete."
