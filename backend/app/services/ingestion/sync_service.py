@@ -147,6 +147,56 @@ def _sync_runs_and_jobs(db: Session, repository: Repository, client: GitHubClien
                 extra=log_extra(repository_id=repository.id, run_id=raw_run.get("id"), error=str(exc)),
             )
 
+        _backfill_superseded_attempts(db, repository, workflow_by_github_id, existing_runs, raw_run, client, result)
+
+
+def _backfill_superseded_attempts(
+    db: Session,
+    repository: Repository,
+    workflow_by_github_id: dict[int, Workflow],
+    existing_runs: dict[tuple[int, int], WorkflowRun],
+    raw_run: dict[str, Any],
+    client: GitHubClient,
+    result: SyncResult,
+) -> None:
+    """`list_workflow_runs` only ever reflects each run's current (latest)
+    attempt - GitHub does not include superseded attempts in that listing.
+    A rerun's earlier attempt(s) are otherwise invisible to ADPO, which
+    means the Failure/Retry analyzer's retry-waste signal (which needs
+    >=2 attempts per run_number) can never fire. This walks back through
+    attempts 1..latest-1 and fetches each one individually."""
+    github_run_id = raw_run["id"]
+    latest_attempt = raw_run.get("run_attempt", 1)
+
+    for attempt in range(1, latest_attempt):
+        if (github_run_id, attempt) in existing_runs:
+            continue  # a superseded attempt is immutable once complete - no need to refetch it
+
+        try:
+            attempt_raw_run = client.get_workflow_run_attempt(
+                repository.owner_login, repository.name, github_run_id, attempt
+            )
+            attempt_run = _upsert_run(db, repository, workflow_by_github_id, existing_runs, attempt_raw_run)
+            result.runs_synced += 1
+        except Exception as exc:  # noqa: BLE001 - one malformed attempt must not abort the whole sync
+            result.errors.append(f"run {github_run_id} attempt {attempt}: {exc}")
+            logger.warning(
+                "skipping superseded attempt due to error",
+                extra=log_extra(repository_id=repository.id, run_id=github_run_id, attempt=attempt, error=str(exc)),
+            )
+            continue
+
+        try:
+            jobs_synced, steps_synced = _sync_jobs_for_run(db, repository, attempt_run, attempt_raw_run, client)
+            result.jobs_synced += jobs_synced
+            result.steps_synced += steps_synced
+        except Exception as exc:  # noqa: BLE001 - missing jobs for one attempt must not abort the sync
+            result.errors.append(f"jobs for run {github_run_id} attempt {attempt}: {exc}")
+            logger.warning(
+                "skipping jobs for superseded attempt due to error",
+                extra=log_extra(repository_id=repository.id, run_id=github_run_id, attempt=attempt, error=str(exc)),
+            )
+
 
 def _upsert_run(
     db: Session,
