@@ -218,7 +218,7 @@ Realistic next steps, based on documented current limitations (`backend/README.m
 
 ## License
 
-No license is currently declared for this repository (no `LICENSE` file). Without one, default copyright applies and others technically have no legal right to use, modify, or redistribute the code, even though it's publicly visible. If you intend this as an open-source portfolio project, **MIT** is a common, permissive choice for this kind of project — but that's a decision with real licensing implications, so it hasn't been added automatically. Choose and add a `LICENSE` file before or shortly after making the repository public.
+MIT — see [LICENSE](LICENSE). Copyright (c) 2026 Jenoyrex.
 
 ## Contributing
 
