@@ -10,6 +10,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,6 +29,19 @@ class Settings(BaseSettings):
 
     # --- Database ---
     database_url: str = "postgresql+psycopg://adpo:adpo@localhost:5433/adpo"
+
+    @field_validator("database_url")
+    @classmethod
+    def _force_psycopg_driver(cls, v: str) -> str:
+        # Managed hosts (e.g. Render) hand out bare postgresql:// / postgres://
+        # URLs. SQLAlchemy resolves an unqualified postgresql:// scheme to the
+        # psycopg2 dialect, but this project only ships psycopg v3 - so force
+        # the +psycopg driver when the URL doesn't already name one.
+        if v.startswith("postgresql://"):
+            return "postgresql+psycopg://" + v[len("postgresql://"):]
+        if v.startswith("postgres://"):
+            return "postgresql+psycopg://" + v[len("postgres://"):]
+        return v
 
     # --- Token encryption at rest ---
     token_encryption_key: str = ""
