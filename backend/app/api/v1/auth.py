@@ -198,9 +198,13 @@ def github_callback(
         session_cookie,
         max_age=SESSION_MAX_AGE_SECONDS,
         httponly=True,
-        samesite="lax",
-        # Secure in production (HTTPS is a hard requirement there); off in
-        # local dev so the cookie still works over plain http://localhost.
+        # Frontend and backend live on different registrable domains in
+        # production (Vercel / Render), so every API call is a cross-site
+        # fetch - SameSite=Lax would never be attached to those. None
+        # requires Secure, which is also only valid over the HTTPS
+        # production deploys. Local dev keeps Lax/non-Secure so the cookie
+        # still works over plain http://localhost.
+        samesite="none" if settings.environment == "production" else "lax",
         secure=settings.environment == "production",
     )
     return redirect
