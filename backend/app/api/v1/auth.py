@@ -63,7 +63,7 @@ def github_login(settings: Settings = Depends(get_settings)) -> Response:
 @router.get("/github/callback")
 def github_callback(
     request: Request,
-    code: str,
+    code: str | None = None,
     state: str | None = None,
     installation_id: int | None = None,
     setup_action: str = "install",
@@ -101,6 +101,12 @@ def github_callback(
         redirect = Response(status_code=status.HTTP_302_FOUND)
         redirect.headers["Location"] = settings.frontend_success_redirect_url
         return redirect
+
+    if not code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="missing oauth code parameter",
+        )
 
     if not cookie_state:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "missing oauth state cookie")
