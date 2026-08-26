@@ -203,10 +203,6 @@ Production architecture:
 
 For a from-scratch production deploy: install from the pinned lockfile (`backend/requirements-lock.txt`) rather than `pyproject.toml` ranges, run without `--reload`, set `ENVIRONMENT=production` (marks the session cookie `Secure`) and `ALLOWED_HOSTS` to the backend's own hostname. See `backend/README.md` "Running in production" for the full command. No deployment credentials are included in this repository.
 
-## Screenshots
-
-None are checked into the repository yet. Useful additions here would be: the connected-repository dashboard view, the findings list for a repository with real findings, and the "connect a repository" flow. Not included to avoid fabricating an image that doesn't exist in the repo.
-
 ## Roadmap
 
 Realistic next steps, based on documented current limitations (`backend/README.md` "Known limitations"):
