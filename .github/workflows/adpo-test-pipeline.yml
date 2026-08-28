@@ -3,7 +3,15 @@ name: ADPO Test Pipeline
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch: {}
+
+# Least privilege: nothing in this workflow writes to the repo, comments on
+# PRs, or publishes anything - every job only needs to read the checked-out
+# code.
+permissions:
+  contents: read
 
 jobs:
   install-deps:
@@ -63,6 +71,28 @@ jobs:
       - name: Run analyzer test suite
         working-directory: analyzer
         run: pytest -v
+
+  frontend-tests:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Run frontend test suite
+        working-directory: frontend
+        run: npm test
+      - name: Typecheck and build frontend
+        working-directory: frontend
+        run: npm run build
 
   slow-integration-check:
     name: Slow integration check
