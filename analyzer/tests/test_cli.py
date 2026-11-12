@@ -319,3 +319,48 @@ def test_dropped_connection_becomes_retryable_response(monkeypatch):
     monkeypatch.setattr(github_fetch.urllib.request, "urlopen", boom)
     resp = github_fetch.urllib_transport("https://api.github.com/x", {})
     assert resp.status == 599
+
+
+def _patch_urlopen(monkeypatch, exc):
+    from adpo import github_fetch
+
+    calls = []
+
+    def fake(*a, **k):
+        calls.append(1)
+        raise exc
+
+    monkeypatch.setattr(github_fetch.urllib.request, "urlopen", fake)
+    return calls
+
+
+def test_dropped_connections_retry_is_bounded_with_backoff(monkeypatch):
+    import http.client
+
+    calls = _patch_urlopen(monkeypatch, http.client.IncompleteRead(b"", 10))
+    sleeps = []
+    client = GitHubClient(sleep=sleeps.append, log=lambda m: None, max_retries=3)
+    with pytest.raises(GitHubFetchError, match="599"):
+        client.get_json("https://api.github.com/x")
+    assert len(calls) == 4 and sleeps == [1.0, 2.0, 4.0]
+
+
+@pytest.mark.parametrize("exc", [PermissionError(13, "Permission denied"), OSError(28, "No space left on device")])
+def test_non_network_oserror_is_not_retried(monkeypatch, exc):
+    calls = _patch_urlopen(monkeypatch, exc)
+    sleeps = []
+    client = GitHubClient(sleep=sleeps.append, log=lambda m: None)
+    with pytest.raises(type(exc)):
+        client.get_json("https://api.github.com/x")
+    assert len(calls) == 1 and sleeps == []
+
+
+def test_cache_write_failure_fails_fast_with_clear_message(tmp_path, capsys):
+    blocker = tmp_path / "not-a-dir"
+    blocker.write_text("")  # cache dir path is a file -> mkdir/write fails
+    t = RecordedTransport()
+    client, sleeps = make_client(t, cache_dir=blocker)
+    assert main(["analyze", "Jenoyrex/ADPO"], client=client) == 1
+    err = capsys.readouterr().err
+    assert "cannot write response cache" in err and "--cache-dir" in err
+    assert len(t.calls) == 1 and sleeps == []

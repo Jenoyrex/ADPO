@@ -47,6 +47,10 @@ class GitHubFetchError(RuntimeError):
     pass
 
 
+class CacheWriteError(GitHubFetchError):
+    """Local cache could not be written; never retried."""
+
+
 @dataclass
 class HttpResponse:
     status: int
@@ -72,14 +76,17 @@ def _ssl_context() -> ssl.SSLContext:
 
 def urllib_transport(url: str, headers: Dict[str, str]) -> HttpResponse:
     req = urllib.request.Request(url, headers=headers)
+    context = _ssl_context()  # local trust-store problems are not network errors: let them raise
     try:
-        with urllib.request.urlopen(req, timeout=30, context=_ssl_context()) as resp:  # noqa: S310 - https API host
+        with urllib.request.urlopen(req, timeout=30, context=context) as resp:  # noqa: S310 - https API host
             return HttpResponse(resp.status, {k.lower(): v for k, v in resp.headers.items()}, resp.read())
     except urllib.error.HTTPError as exc:
         return HttpResponse(exc.code, {k.lower(): v for k, v in exc.headers.items()}, exc.read())
-    except (urllib.error.URLError, http.client.HTTPException, OSError) as exc:
-        # Surface as a retryable 5xx-like response rather than a traceback.
-        return HttpResponse(599, {}, str(exc).encode())
+    except (urllib.error.URLError, http.client.HTTPException, ConnectionError, TimeoutError) as exc:
+        # Network-level failures only (DNS, refused/reset connection, dropped response, timeout):
+        # surface as a 5xx-like status so get_json's bounded backoff handles them. Any other
+        # OSError (permissions, disk) is not caught here and fails immediately.
+        return HttpResponse(599, {}, f"network error: {exc}".encode())
 
 
 def default_cache_dir() -> Path:
@@ -146,10 +153,16 @@ class GitHubClient:
         path = self._cache_path(url)
         if path is None:
             return
-        path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(".tmp")
-        tmp.write_text(json.dumps({"url": url, "fetched_at": self.now(), "body": body, "next": next_url}), "utf-8")
-        tmp.replace(path)
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp.write_text(json.dumps({"url": url, "fetched_at": self.now(), "body": body, "next": next_url}), "utf-8")
+            tmp.replace(path)
+        except OSError as exc:  # disk full, permission denied, ...: not retryable
+            raise CacheWriteError(
+                f"cannot write response cache in {path.parent} ({exc.__class__.__name__}: {exc}); "
+                "free space, fix permissions, or pass --cache-dir / set ADPO_CACHE_DIR"
+            ) from exc
 
     # ---- HTTP ----------------------------------------------------------------
 

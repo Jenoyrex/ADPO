@@ -151,6 +151,9 @@ def main(argv: Optional[Sequence[str]] = None, client: Optional[GitHubClient] = 
     except GitHubFetchError as exc:
         print(f"adpo: {exc}", file=sys.stderr)
         return 1
+    except OSError as exc:  # local, non-network failure (e.g. unreadable trust store)
+        print(f"adpo: local I/O error, not retried: {exc.__class__.__name__}: {exc}", file=sys.stderr)
+        return 1
     if not raw:
         print("adpo: no completed workflow runs found for that selection.", file=sys.stderr)
         return 1
