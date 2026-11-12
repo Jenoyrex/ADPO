@@ -306,3 +306,16 @@ def test_run_with_unfetchable_jobs_is_skipped_not_partially_used():
     skipped_id = bad.split("/runs/")[1].split("/")[0]
     assert client.skipped_runs == [skipped_id]
     assert all(r["run_id"].split("/")[0] != skipped_id for r in raw)
+
+
+def test_dropped_connection_becomes_retryable_response(monkeypatch):
+    import http.client
+
+    from adpo import github_fetch
+
+    def boom(*a, **k):
+        raise http.client.IncompleteRead(b"", 10)
+
+    monkeypatch.setattr(github_fetch.urllib.request, "urlopen", boom)
+    resp = github_fetch.urllib_transport("https://api.github.com/x", {})
+    assert resp.status == 599

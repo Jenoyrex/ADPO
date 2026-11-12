@@ -25,6 +25,7 @@ from __future__ import annotations
 import base64
 import functools
 import hashlib
+import http.client
 import json
 import os
 import re
@@ -76,7 +77,7 @@ def urllib_transport(url: str, headers: Dict[str, str]) -> HttpResponse:
             return HttpResponse(resp.status, {k.lower(): v for k, v in resp.headers.items()}, resp.read())
     except urllib.error.HTTPError as exc:
         return HttpResponse(exc.code, {k.lower(): v for k, v in exc.headers.items()}, exc.read())
-    except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+    except (urllib.error.URLError, http.client.HTTPException, OSError) as exc:
         # Surface as a retryable 5xx-like response rather than a traceback.
         return HttpResponse(599, {}, str(exc).encode())
 
