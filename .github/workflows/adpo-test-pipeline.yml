@@ -51,7 +51,7 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Run backend test suite
         working-directory: backend
-        run: pytest -v
+        run: pytest -v --cov=app --cov-report=term
 
   analyzer-tests:
     name: Analyzer tests
@@ -70,7 +70,29 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Run analyzer test suite
         working-directory: analyzer
-        run: pytest -v
+        run: pytest -v --cov=adpo --cov-report=term
+
+  lint:
+    name: Lint, format and type checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install analyzer dev tools
+        working-directory: analyzer
+        run: pip install -e ".[dev]"
+      - name: Ruff lint
+        run: ruff check analyzer backend
+      - name: Ruff format check
+        run: ruff format --check analyzer backend
+      - name: Mypy (analyzer)
+        working-directory: analyzer
+        run: mypy
 
   frontend-tests:
     name: Frontend tests
