@@ -1,0 +1,379 @@
+[
+ {
+  "finding_id": "F0002",
+  "repo": "pallets/flask",
+  "analyzer_type": "failure_retry",
+  "title": "Job '3.12' is flaky (14% failure rate)",
+  "description": "Across 148 runs with a conclusive outcome, job '3.12' failed 21 time(s).",
+  "evidence": [
+   "Job '3.12' failed 21 of 148 run(s) with a conclusive outcome (failure rate 14%).",
+   "Example failing run IDs: 23965343616, 24007482516, 24007687136, 25642949077, 25643049930 ...",
+   "Failing runs still consumed compute time before failing (median 13s)."
+  ],
+  "metrics": {
+   "job_name": "3.12",
+   "classification": "flaky",
+   "total_conclusive_runs": 148,
+   "failures": 21,
+   "successes": 127,
+   "failure_rate": 0.142
+  },
+  "severity": "low",
+  "confidence": "high",
+  "recommendation": "Investigate for non-determinism (test ordering, timing, shared state, external service dependencies) before adding retries, since retries mask flakiness rather than fix it.",
+  "estimated_savings_range": {
+   "low_seconds": 18.0,
+   "high_seconds": 70.0,
+   "unknown": false,
+   "basis": "Measured compute time consumed by the 21 observed failing run(s) of this job before they failed - time that would likely be avoided (or at least not repeated) if the failure were fixed. Low end is the average, high end is the single most expensive observed failure."
+  }
+ },
+ {
+  "finding_id": "F0012",
+  "repo": "pallets/flask",
+  "analyzer_type": "failure_retry",
+  "title": "Job 'typing' is flaky (7% failure rate)",
+  "description": "Across 149 runs with a conclusive outcome, job 'typing' failed 11 time(s).",
+  "evidence": [
+   "Job 'typing' failed 11 of 149 run(s) with a conclusive outcome (failure rate 7%).",
+   "Example failing run IDs: 24455732971, 24457112420, 26706107423, 26707063224, 28604659385 ...",
+   "Failing runs still consumed compute time before failing (median 14s)."
+  ],
+  "metrics": {
+   "job_name": "typing",
+   "classification": "flaky",
+   "total_conclusive_runs": 149,
+   "failures": 11,
+   "successes": 138,
+   "failure_rate": 0.074
+  },
+  "severity": "low",
+  "confidence": "high",
+  "recommendation": "Investigate for non-determinism (test ordering, timing, shared state, external service dependencies) before adding retries, since retries mask flakiness rather than fix it.",
+  "estimated_savings_range": {
+   "low_seconds": 14.8,
+   "high_seconds": 22.0,
+   "unknown": false,
+   "basis": "Measured compute time consumed by the 11 observed failing run(s) of this job before they failed - time that would likely be avoided (or at least not repeated) if the failure were fixed. Low end is the average, high end is the single most expensive observed failure."
+  }
+ },
+ {
+  "finding_id": "F0005",
+  "repo": "pallets/flask",
+  "analyzer_type": "failure_retry",
+  "title": "Job '3.14t' is flaky (14% failure rate)",
+  "description": "Across 148 runs with a conclusive outcome, job '3.14t' failed 21 time(s).",
+  "evidence": [
+   "Job '3.14t' failed 21 of 148 run(s) with a conclusive outcome (failure rate 14%).",
+   "Example failing run IDs: 23965343616, 24007482516, 24007687136, 25642949077, 25643049930 ...",
+   "Failing runs still consumed compute time before failing (median 23s)."
+  ],
+  "metrics": {
+   "job_name": "3.14t",
+   "classification": "flaky",
+   "total_conclusive_runs": 148,
+   "failures": 21,
+   "successes": 127,
+   "failure_rate": 0.142
+  },
+  "severity": "low",
+  "confidence": "high",
+  "recommendation": "Investigate for non-determinism (test ordering, timing, shared state, external service dependencies) before adding retries, since retries mask flakiness rather than fix it.",
+  "estimated_savings_range": {
+   "low_seconds": 28.2,
+   "high_seconds": 92.0,
+   "unknown": false,
+   "basis": "Measured compute time consumed by the 21 observed failing run(s) of this job before they failed - time that would likely be avoided (or at least not repeated) if the failure were fixed. Low end is the average, high end is the single most expensive observed failure."
+  }
+ },
+ {
+  "finding_id": "F0008",
+  "repo": "pallets/flask",
+  "analyzer_type": "failure_retry",
+  "title": "Job 'Mac' is flaky (14% failure rate)",
+  "description": "Across 148 runs with a conclusive outcome, job 'Mac' failed 21 time(s).",
+  "evidence": [
+   "Job 'Mac' failed 21 of 148 run(s) with a conclusive outcome (failure rate 14%).",
+   "Example failing run IDs: 23965343616, 24007482516, 24007687136, 25642949077, 25643049930 ...",
+   "Failing runs still consumed compute time before failing (median 15s)."
+  ],
+  "metrics": {
+   "job_name": "Mac",
+   "classification": "flaky",
+   "total_conclusive_runs": 148,
+   "failures": 21,
+   "successes": 127,
+   "failure_rate": 0.142
+  },
+  "severity": "low",
+  "confidence": "high",
+  "recommendation": "Investigate for non-determinism (test ordering, timing, shared state, external service dependencies) before adding retries, since retries mask flakiness rather than fix it.",
+  "estimated_savings_range": {
+   "low_seconds": 19.8,
+   "high_seconds": 66.0,
+   "unknown": false,
+   "basis": "Measured compute time consumed by the 21 observed failing run(s) of this job before they failed - time that would likely be avoided (or at least not repeated) if the failure were fixed. Low end is the average, high end is the single most expensive observed failure."
+  }
+ },
+ {
+  "finding_id": "F0011",
+  "repo": "pallets/flask",
+  "analyzer_type": "failure_retry",
+  "title": "Job 'Windows' is flaky (14% failure rate)",
+  "description": "Across 147 runs with a conclusive outcome, job 'Windows' failed 21 time(s).",
+  "evidence": [
+   "Job 'Windows' failed 21 of 147 run(s) with a conclusive outcome (failure rate 14%).",
+   "Example failing run IDs: 23965343616, 24007482516, 24007687136, 25642949077, 25643049930 ...",
+   "Failing runs still consumed compute time before failing (median 32s)."
+  ],
+  "metrics": {
+   "job_name": "Windows",
+   "classification": "flaky",
+   "total_conclusive_runs": 147,
+   "failures": 21,
+   "successes": 126,
+   "failure_rate": 0.143
+  },
+  "severity": "low",
+  "confidence": "high",
+  "recommendation": "Investigate for non-determinism (test ordering, timing, shared state, external service dependencies) before adding retries, since retries mask flakiness rather than fix it.",
+  "estimated_savings_range": {
+   "low_seconds": 39.1,
+   "high_seconds": 110.0,
+   "unknown": false,
+   "basis": "Measured compute time consumed by the 21 observed failing run(s) of this job before they failed - time that would likely be avoided (or at least not repeated) if the failure were fixed. Low end is the average, high end is the single most expensive observed failure."
+  }
+ },
+ {
+  "finding_id": "F0010",
+  "repo": "pallets/flask",
+  "analyzer_type": "failure_retry",
+  "title": "Job 'PyPy' is flaky (15% failure rate)",
+  "description": "Across 149 runs with a conclusive outcome, job 'PyPy' failed 22 time(s).",
+  "evidence": [
+   "Job 'PyPy' failed 22 of 149 run(s) with a conclusive outcome (failure rate 15%).",
+   "Example failing run IDs: 23965343616, 24007482516, 24007687136, 25642949077, 25643049930 ...",
+   "Failing runs still consumed compute time before failing (median 24s)."
+  ],
+  "metrics": {
+   "job_name": "PyPy",
+   "classification": "flaky",
+   "total_conclusive_runs": 149,
+   "failures": 22,
+   "successes": 127,
+   "failure_rate": 0.148
+  },
+  "severity": "low",
+  "confidence": "high",
+  "recommendation": "Investigate for non-determinism (test ordering, timing, shared state, external service dependencies) before adding retries, since retries mask flakiness rather than fix it.",
+  "estimated_savings_range": {
+   "low_seconds": 25.3,
+   "high_seconds": 46.0,
+   "unknown": false,
+   "basis": "Measured compute time consumed by the 22 observed failing run(s) of this job before they failed - time that would likely be avoided (or at least not repeated) if the failure were fixed. Low end is the average, high end is the single most expensive observed failure."
+  }
+ },
+ {
+  "finding_id": "F0004",
+  "repo": "pallets/flask",
+  "analyzer_type": "failure_retry",
+  "title": "Job '3.14' is flaky (14% failure rate)",
+  "description": "Across 148 runs with a conclusive outcome, job '3.14' failed 21 time(s).",
+  "evidence": [
+   "Job '3.14' failed 21 of 148 run(s) with a conclusive outcome (failure rate 14%).",
+   "Example failing run IDs: 23965343616, 24007482516, 24007687136, 25642949077, 25643049930 ...",
+   "Failing runs still consumed compute time before failing (median 13s)."
+  ],
+  "metrics": {
+   "job_name": "3.14",
+   "classification": "flaky",
+   "total_conclusive_runs": 148,
+   "failures": 21,
+   "successes": 127,
+   "failure_rate": 0.142
+  },
+  "severity": "low",
+  "confidence": "high",
+  "recommendation": "Investigate for non-determinism (test ordering, timing, shared state, external service dependencies) before adding retries, since retries mask flakiness rather than fix it.",
+  "estimated_savings_range": {
+   "low_seconds": 20.1,
+   "high_seconds": 85.0,
+   "unknown": false,
+   "basis": "Measured compute time consumed by the 21 observed failing run(s) of this job before they failed - time that would likely be avoided (or at least not repeated) if the failure were fixed. Low end is the average, high end is the single most expensive observed failure."
+  }
+ },
+ {
+  "finding_id": "F0001",
+  "repo": "pallets/flask",
+  "analyzer_type": "failure_retry",
+  "title": "Job '3.11' is flaky (14% failure rate)",
+  "description": "Across 148 runs with a conclusive outcome, job '3.11' failed 21 time(s).",
+  "evidence": [
+   "Job '3.11' failed 21 of 148 run(s) with a conclusive outcome (failure rate 14%).",
+   "Example failing run IDs: 23965343616, 24007482516, 24007687136, 25642949077, 25643049930 ...",
+   "Failing runs still consumed compute time before failing (median 11s)."
+  ],
+  "metrics": {
+   "job_name": "3.11",
+   "classification": "flaky",
+   "total_conclusive_runs": 148,
+   "failures": 21,
+   "successes": 127,
+   "failure_rate": 0.142
+  },
+  "severity": "low",
+  "confidence": "high",
+  "recommendation": "Investigate for non-determinism (test ordering, timing, shared state, external service dependencies) before adding retries, since retries mask flakiness rather than fix it.",
+  "estimated_savings_range": {
+   "low_seconds": 15.9,
+   "high_seconds": 60.0,
+   "unknown": false,
+   "basis": "Measured compute time consumed by the 21 observed failing run(s) of this job before they failed - time that would likely be avoided (or at least not repeated) if the failure were fixed. Low end is the average, high end is the single most expensive observed failure."
+  }
+ },
+ {
+  "finding_id": "F0000",
+  "repo": "pallets/flask",
+  "analyzer_type": "failure_retry",
+  "title": "Job '3.10' is flaky (16% failure rate)",
+  "description": "Across 141 runs with a conclusive outcome, job '3.10' failed 22 time(s).",
+  "evidence": [
+   "Job '3.10' failed 22 of 141 run(s) with a conclusive outcome (failure rate 16%).",
+   "Example failing run IDs: 23965343616, 24007482516, 24007687136, 25642949077, 25643049930 ...",
+   "Failing runs still consumed compute time before failing (median 12s)."
+  ],
+  "metrics": {
+   "job_name": "3.10",
+   "classification": "flaky",
+   "total_conclusive_runs": 141,
+   "failures": 22,
+   "successes": 119,
+   "failure_rate": 0.156
+  },
+  "severity": "medium",
+  "confidence": "high",
+  "recommendation": "Investigate for non-determinism (test ordering, timing, shared state, external service dependencies) before adding retries, since retries mask flakiness rather than fix it.",
+  "estimated_savings_range": {
+   "low_seconds": 14.1,
+   "high_seconds": 33.0,
+   "unknown": false,
+   "basis": "Measured compute time consumed by the 22 observed failing run(s) of this job before they failed - time that would likely be avoided (or at least not repeated) if the failure were fixed. Low end is the average, high end is the single most expensive observed failure."
+  }
+ },
+ {
+  "finding_id": "F0006",
+  "repo": "pallets/flask",
+  "analyzer_type": "failure_retry",
+  "title": "Job '3.9' is flaky (11% failure rate)",
+  "description": "Across 18 runs with a conclusive outcome, job '3.9' failed 2 time(s).",
+  "evidence": [
+   "Job '3.9' failed 2 of 18 run(s) with a conclusive outcome (failure rate 11%).",
+   "Example failing run IDs: 23965343616, 24007482516",
+   "Failing runs still consumed compute time before failing (median 24s)."
+  ],
+  "metrics": {
+   "job_name": "3.9",
+   "classification": "flaky",
+   "total_conclusive_runs": 18,
+   "failures": 2,
+   "successes": 16,
+   "failure_rate": 0.111
+  },
+  "severity": "low",
+  "confidence": "high",
+  "recommendation": "Investigate for non-determinism (test ordering, timing, shared state, external service dependencies) before adding retries, since retries mask flakiness rather than fix it.",
+  "estimated_savings_range": {
+   "low_seconds": 22.0,
+   "high_seconds": 24.0,
+   "unknown": false,
+   "basis": "Measured compute time consumed by the 2 observed failing run(s) of this job before they failed - time that would likely be avoided (or at least not repeated) if the failure were fixed. Low end is the average, high end is the single most expensive observed failure."
+  }
+ },
+ {
+  "finding_id": "F0007",
+  "repo": "pallets/flask",
+  "analyzer_type": "failure_retry",
+  "title": "Job 'Development Versions' is flaky (72% failure rate)",
+  "description": "Across 149 runs with a conclusive outcome, job 'Development Versions' failed 107 time(s).",
+  "evidence": [
+   "Job 'Development Versions' failed 107 of 149 run(s) with a conclusive outcome (failure rate 72%).",
+   "Example failing run IDs: 22557721388, 22676559045, 22676566577, 22793130380, 22832077298 ...",
+   "Failing runs still consumed compute time before failing (median 16s)."
+  ],
+  "metrics": {
+   "job_name": "Development Versions",
+   "classification": "flaky",
+   "total_conclusive_runs": 149,
+   "failures": 107,
+   "successes": 42,
+   "failure_rate": 0.718
+  },
+  "severity": "high",
+  "confidence": "high",
+  "recommendation": "Investigate for non-determinism (test ordering, timing, shared state, external service dependencies) before adding retries, since retries mask flakiness rather than fix it.",
+  "estimated_savings_range": {
+   "low_seconds": 16.9,
+   "high_seconds": 72.0,
+   "unknown": false,
+   "basis": "Measured compute time consumed by the 107 observed failing run(s) of this job before they failed - time that would likely be avoided (or at least not repeated) if the failure were fixed. Low end is the average, high end is the single most expensive observed failure."
+  }
+ },
+ {
+  "finding_id": "F0003",
+  "repo": "pallets/flask",
+  "analyzer_type": "failure_retry",
+  "title": "Job '3.13' is flaky (14% failure rate)",
+  "description": "Across 148 runs with a conclusive outcome, job '3.13' failed 21 time(s).",
+  "evidence": [
+   "Job '3.13' failed 21 of 148 run(s) with a conclusive outcome (failure rate 14%).",
+   "Example failing run IDs: 23965343616, 24007482516, 24007687136, 25642949077, 25643049930 ...",
+   "Failing runs still consumed compute time before failing (median 14s)."
+  ],
+  "metrics": {
+   "job_name": "3.13",
+   "classification": "flaky",
+   "total_conclusive_runs": 148,
+   "failures": 21,
+   "successes": 127,
+   "failure_rate": 0.142
+  },
+  "severity": "low",
+  "confidence": "high",
+  "recommendation": "Investigate for non-determinism (test ordering, timing, shared state, external service dependencies) before adding retries, since retries mask flakiness rather than fix it.",
+  "estimated_savings_range": {
+   "low_seconds": 19.9,
+   "high_seconds": 78.0,
+   "unknown": false,
+   "basis": "Measured compute time consumed by the 21 observed failing run(s) of this job before they failed - time that would likely be avoided (or at least not repeated) if the failure were fixed. Low end is the average, high end is the single most expensive observed failure."
+  }
+ },
+ {
+  "finding_id": "F0009",
+  "repo": "pallets/flask",
+  "analyzer_type": "failure_retry",
+  "title": "Job 'Minimum Versions' is flaky (32% failure rate)",
+  "description": "Across 149 runs with a conclusive outcome, job 'Minimum Versions' failed 48 time(s).",
+  "evidence": [
+   "Job 'Minimum Versions' failed 48 of 149 run(s) with a conclusive outcome (failure rate 32%).",
+   "Example failing run IDs: 25642949077, 25643049930, 26066723720, 26114410608, 26241663202 ...",
+   "Failing runs still consumed compute time before failing (median 14s)."
+  ],
+  "metrics": {
+   "job_name": "Minimum Versions",
+   "classification": "flaky",
+   "total_conclusive_runs": 149,
+   "failures": 48,
+   "successes": 101,
+   "failure_rate": 0.322
+  },
+  "severity": "medium",
+  "confidence": "high",
+  "recommendation": "Investigate for non-determinism (test ordering, timing, shared state, external service dependencies) before adding retries, since retries mask flakiness rather than fix it.",
+  "estimated_savings_range": {
+   "low_seconds": 14.6,
+   "high_seconds": 31.0,
+   "unknown": false,
+   "basis": "Measured compute time consumed by the 48 observed failing run(s) of this job before they failed - time that would likely be avoided (or at least not repeated) if the failure were fixed. Low end is the average, high end is the single most expensive observed failure."
+  }
+ }
+]
