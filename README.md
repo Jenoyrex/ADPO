@@ -2,6 +2,14 @@
 
 Deterministic CI intelligence for GitHub Actions — connects to your repositories via a GitHub App, syncs workflow run history, and runs an evidence-based analysis engine to surface concrete, explainable CI problems (no LLM involved in the analysis itself).
 
+**Try it on any public repo** (no GitHub App or backend needed; set `GITHUB_TOKEN` to raise the API limit from 60 to 5,000 requests/hour):
+
+```bash
+pip install "./analyzer[cli]"
+adpo analyze pallets/flask --runs 100
+adpo analyze pallets/flask --workflow tests.yaml --format md > report.md
+```
+
 ## Overview
 
 CI pipelines quietly waste time and money: slow jobs that used to be fast, dependency-install steps that dominate runtime, flaky tests masked by automatic retries, workflows that could run steps in parallel but don't. Spotting these usually means manually digging through Actions run history.
