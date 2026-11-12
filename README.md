@@ -222,6 +222,13 @@ Realistic next steps, based on documented current limitations (`backend/README.m
 - Backfill every historical attempt of a rerun, not just the latest
 - Broader frontend test coverage
 
+## How this was built
+
+- Tools used: <FILL IN>
+- What I designed myself: <FILL IN>
+- AI suggestions I rejected and why: <FILL IN>
+- What the evaluation taught me: <FILL IN after labelling>
+
 ## License
 
 MIT — see [LICENSE](LICENSE). Copyright (c) 2026 Jenoyrex.
