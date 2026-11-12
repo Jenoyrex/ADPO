@@ -65,7 +65,9 @@ pip install pytest --break-system-packages   # or use a venv
 python3 -m pytest tests/ -v
 ```
 
-124 tests, 94% statement coverage of `adpo/`. See `REASONING.md` for what each test
+Test count: `pytest --collect-only -q`. Statement coverage of `adpo/`:
+`pytest --cov=adpo --cov-report=term` (CI prints this summary on every run).
+See `REASONING.md` for what each test
 is actually checking for and why.
 
 ## The Finding contract

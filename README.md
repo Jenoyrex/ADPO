@@ -39,16 +39,16 @@ Sync and analysis are triggered explicitly (`POST /repositories/{id}/sync`, then
 
 - **GitHub App integration** (not a classic OAuth App) — installs with fine-grained, read-only `Actions` + `Metadata` permissions instead of the OAuth App's all-or-nothing `repo` scope.
 - **Six deterministic analyzers**, each independently testable with zero dependency on the others or on the engine:
-  - Slow Job — jobs that have gotten slower relative to their own history
-  - Slow Step — same, at step granularity
-  - Historical Regression — statistically significant runtime regressions over time
-  - Dependency Installation — install steps that dominate run time
-  - Failure/Retry — wasted time from failing runs that succeed on retry
+  - Slow Job — jobs whose median duration is a large share of the workflow's median duration, or long in absolute terms
+  - Slow Step — same, at step granularity (share of the parent job)
+  - Historical Regression — recent-window median vs baseline-window median, flagged above a relative and absolute threshold (a threshold rule, not a significance test)
+  - Dependency Installation — install steps with no detected cache, or a cache with high run-to-run variance
+  - Failure/Retry — per-job failure rates, plus compute time spent on superseded re-run attempts
   - Potential Parallelization — deliberately conservative; never claims two jobs are safe to parallelize just because they happen to run sequentially today
 - **Evidence-backed findings** — every finding carries `evidence` (concrete statements citing observed numbers and run IDs), `metrics`, and a `basis` for any savings estimate; nothing is inferred without a number to point to.
 - **Idempotent sync** — repeated syncs upsert cleanly; a single run's job-fetch failure doesn't abort the whole sync.
 - **Session-based auth** — signed, httponly session cookie; the frontend never sees a GitHub token.
-- **206 automated tests** across the three packages (see [Testing](#testing)).
+- **Automated tests** across the three packages; counts and the commands that produce them are in [Testing](#testing).
 
 ## Architecture
 
@@ -184,13 +184,15 @@ None of these have real values anywhere in this repository, in its history, or i
 
 ## Testing
 
-All 206 tests pass as of the last verified run:
+Test counts below are what the listed command reports on this branch; re-run it to check.
 
-| Package | Command | Result |
+| Package | Count command | Collected |
 |---|---|---|
-| `analyzer/` | `pytest tests/ -v` | 124 passed |
-| `backend/` | `pytest` | 63 passed |
-| `frontend/` | `npm run test` | 19 passed (5 test files) |
+| `analyzer/` | `pytest --collect-only -q` | 124 |
+| `backend/` | `pytest --collect-only -q` | 53 |
+| `frontend/` | `npx vitest list` | 19 (5 test files) |
+
+Total: 196. Run the suites with `pytest` (analyzer, backend) and `npm test` (frontend).
 
 Backend tests run against an isolated in-memory/temp SQLite database with mocked HTTP (`respx`) — they never touch a real database or the live GitHub API. The Alembic migration itself is verified separately by applying it to a real local Postgres container.
 
