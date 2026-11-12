@@ -1,12 +1,12 @@
 """Verifies the DB-row -> `adpo.models` adapter and that running the real,
 locked `adpo.AnalysisEngine` against synced data produces and persists
 findings correctly - the actual Phase 2F integration point."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
 from adpo.models import WorkflowRun as AdpoWorkflowRun
-
 from app.models.job import Job
 from app.models.repository import Repository
 from app.models.step import Step
@@ -152,7 +152,9 @@ def test_run_analysis_scopes_across_multiple_workflows(db_session, installation)
     architecture note in app/models/analysis.py."""
     repo = _make_repository(db_session, installation)
     ci = Workflow(repository_id=repo.id, github_workflow_id=1, name="CI", path=".github/workflows/ci.yml")
-    release = Workflow(repository_id=repo.id, github_workflow_id=2, name="Release", path=".github/workflows/release.yml")
+    release = Workflow(
+        repository_id=repo.id, github_workflow_id=2, name="Release", path=".github/workflows/release.yml"
+    )
     db_session.add_all([ci, release])
     db_session.commit()
 

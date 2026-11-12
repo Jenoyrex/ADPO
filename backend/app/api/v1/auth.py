@@ -1,6 +1,7 @@
 """GitHub App authentication: user login (who is signed in) and App
 installation (which repos are reachable) are two separate flows, per the
 GitHub App architecture described in backend/README.md."""
+
 from __future__ import annotations
 
 import secrets
@@ -54,9 +55,7 @@ def github_login(settings: Settings = Depends(get_settings)) -> Response:
     }
     redirect = Response(status_code=status.HTTP_302_FOUND)
     redirect.headers["Location"] = f"https://github.com/login/oauth/authorize?{urlencode(params)}"
-    redirect.set_cookie(
-        STATE_COOKIE_NAME, signed_state, max_age=STATE_MAX_AGE_SECONDS, httponly=True, samesite="lax"
-    )
+    redirect.set_cookie(STATE_COOKIE_NAME, signed_state, max_age=STATE_MAX_AGE_SECONDS, httponly=True, samesite="lax")
     return redirect
 
 
@@ -133,9 +132,7 @@ def github_callback(
             )
         except httpx.HTTPError as exc:
             logger.warning("github oauth token exchange request failed", extra=log_extra(error=str(exc)))
-            raise HTTPException(
-                status.HTTP_502_BAD_GATEWAY, "could not reach GitHub to complete sign-in"
-            ) from exc
+            raise HTTPException(status.HTTP_502_BAD_GATEWAY, "could not reach GitHub to complete sign-in") from exc
 
     try:
         token_data = token_response.json()
@@ -217,9 +214,7 @@ def github_callback(
 
 
 @router.get("/github/install")
-def github_install(
-    settings: Settings = Depends(get_settings), _: User = Depends(get_current_user)
-) -> Response:
+def github_install(settings: Settings = Depends(get_settings), _: User = Depends(get_current_user)) -> Response:
     """Sends a signed-in user to install/configure the GitHub App on an
     account or org. GitHub redirects back to `/github/installation/callback`
     once they finish."""

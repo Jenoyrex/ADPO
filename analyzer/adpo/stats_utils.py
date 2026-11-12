@@ -4,6 +4,7 @@ Small, dependency-free statistics helpers shared by every analyzer.
 Kept deliberately minimal (stdlib `statistics` only, no numpy/pandas) so
 the whole engine has zero third-party runtime dependencies.
 """
+
 from __future__ import annotations
 
 from statistics import mean as _mean

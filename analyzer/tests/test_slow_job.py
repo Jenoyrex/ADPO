@@ -69,11 +69,10 @@ def test_finding_has_all_required_fields():
 def test_high_variance_job_gets_non_unknown_savings():
     # Build a job whose duration varies a lot across runs (cv >= 0.10) so the
     # analyzer should be able to anchor a savings estimate to real data.
-    import random
     from datetime import timedelta
+
     from tests.fixtures.synthetic_data import BASE_TIME, make_job, make_run
 
-    rng = random.Random(99)
     runs = []
     for i in range(10):
         day = BASE_TIME + timedelta(days=i)

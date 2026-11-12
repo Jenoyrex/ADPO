@@ -1,6 +1,7 @@
 """Structured logging setup. Every log line is a single JSON object so
 GitHub API traffic, sync progress, and analysis runs can be filtered/queried
 in any log aggregator without a custom parser."""
+
 from __future__ import annotations
 
 import json

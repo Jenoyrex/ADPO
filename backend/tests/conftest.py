@@ -6,6 +6,7 @@ container, so the suite is fast, hermetic, and never touches dev/prod data.
 the Alembic migration itself is verified separately by actually applying it
 to Postgres (see backend/README.md "Running the backend locally").
 """
+
 from __future__ import annotations
 
 import os

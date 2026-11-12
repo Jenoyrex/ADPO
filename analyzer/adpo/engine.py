@@ -8,6 +8,7 @@ about independently. The engine's only jobs are: run every analyzer over
 the same input, isolate any single analyzer's failure from the rest, and
 hand back a flat list of Findings (or dicts, for easy JSON serialization).
 """
+
 from __future__ import annotations
 
 from typing import List, Optional

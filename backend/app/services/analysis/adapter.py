@@ -15,12 +15,12 @@ serializing them to strings just to re-parse them would add a lossy round
 trip for no benefit. `adpo.ingest` remains what real raw-GitHub-JSON
 callers (e.g. a future "analyze without syncing" path) would use.
 """
+
 from __future__ import annotations
 
 from adpo.models import Job as AdpoJob
 from adpo.models import Step as AdpoStep
 from adpo.models import WorkflowRun as AdpoWorkflowRun
-
 from app.models.job import Job as DbJob
 from app.models.step import Step as DbStep
 from app.models.workflow_run import WorkflowRun as DbWorkflowRun

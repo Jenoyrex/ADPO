@@ -2,6 +2,7 @@
 endpoints in a threadpool, which is more than sufficient at this scale and
 avoids the added complexity of an async driver + async session plumbing
 for an MVP."""
+
 from __future__ import annotations
 
 from collections.abc import Generator

@@ -1,5 +1,6 @@
 """Endpoints that read live from the GitHub API (not our DB) - used to let
 the user pick which of their already-installed repos to connect."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -27,9 +28,7 @@ def list_github_repositories(
     if not user.installations:
         return []
 
-    connected_ids = set(
-        db.execute(select(Repository.github_repo_id)).scalars().all()
-    )
+    connected_ids = set(db.execute(select(Repository.github_repo_id)).scalars().all())
 
     results: list[GitHubRepositoryOut] = []
     for installation in user.installations:
@@ -39,7 +38,8 @@ def list_github_repositories(
                 raw_repos = client.list_installation_repositories()
         except GitHubError as exc:
             raise HTTPException(
-                status.HTTP_502_BAD_GATEWAY, f"failed to list repos for installation {installation.installation_id}: {exc}"
+                status.HTTP_502_BAD_GATEWAY,
+                f"failed to list repos for installation {installation.installation_id}: {exc}",
             ) from exc
 
         for raw in raw_repos:

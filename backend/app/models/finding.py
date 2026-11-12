@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import JSON, Boolean, Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.analysis import Analysis
 
 
 class Finding(TimestampMixin, Base):
@@ -19,9 +24,7 @@ class Finding(TimestampMixin, Base):
     __tablename__ = "findings"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    analysis_id: Mapped[int] = mapped_column(
-        ForeignKey("analyses.id", ondelete="CASCADE"), nullable=False, index=True
-    )
+    analysis_id: Mapped[int] = mapped_column(ForeignKey("analyses.id", ondelete="CASCADE"), nullable=False, index=True)
 
     analyzer_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(512), nullable=False)

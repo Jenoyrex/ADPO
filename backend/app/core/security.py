@@ -1,5 +1,6 @@
 """Secret handling: encrypting GitHub tokens at rest and signing the
 session cookie. Nothing here ever logs a secret value."""
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -20,7 +21,7 @@ def _fernet() -> Fernet:
     if not key:
         raise RuntimeError(
             "TOKEN_ENCRYPTION_KEY is not set. Generate one with: "
-            "python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+            'python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"'
         )
     return Fernet(key.encode() if isinstance(key, str) else key)
 

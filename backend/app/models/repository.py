@@ -1,11 +1,18 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.analysis import Analysis
+    from app.models.github_account import GitHubInstallation
+    from app.models.workflow import Workflow
+    from app.models.workflow_run import WorkflowRun
 
 
 class Repository(TimestampMixin, Base):

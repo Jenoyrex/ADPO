@@ -9,6 +9,7 @@ Design rules (see architecture note in the project instructions):
     REST API endpoint (https://docs.github.com/en/rest).
   * Structured metadata only - raw workflow logs are never downloaded.
 """
+
 from __future__ import annotations
 
 import time
@@ -208,7 +209,9 @@ class GitHubClient:
             path = f"/repos/{owner}/{repo}/actions/runs"
         yield from self._paginate(path, params={"per_page": per_page})
 
-    def list_jobs_for_run(self, owner: str, repo: str, run_id: int, *, run_attempt: int | None = None) -> list[dict[str, Any]]:
+    def list_jobs_for_run(
+        self, owner: str, repo: str, run_id: int, *, run_attempt: int | None = None
+    ) -> list[dict[str, Any]]:
         if run_attempt is not None:
             path = f"/repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{run_attempt}/jobs"
         else:
@@ -221,9 +224,7 @@ class GitHubClient:
         possibly-superseded attempt. `list_workflow_runs` only ever reflects
         each run's *current* (latest) attempt, so a rerun's earlier attempt(s)
         can only be recovered through this per-attempt endpoint."""
-        return self._request(
-            "GET", f"/repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{run_attempt}"
-        ).json()
+        return self._request("GET", f"/repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{run_attempt}").json()
 
 
 def _first_list_value(payload: dict[str, Any]) -> list[dict[str, Any]]:

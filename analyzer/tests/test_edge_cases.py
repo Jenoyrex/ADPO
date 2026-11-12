@@ -3,6 +3,7 @@ Cross-cutting edge-case and missing-data tests: every analyzer, run
 individually, must survive odd-but-structurally-valid input without
 raising and without fabricating findings from insufficient data.
 """
+
 import pytest
 
 from adpo.engine import default_analyzers
@@ -41,8 +42,8 @@ def test_analyzer_survives_all_edge_cases_combined(analyzer):
 
 
 def test_zero_steps_job_produces_no_step_level_findings():
-    from adpo.analyzers.slow_step import SlowStepAnalyzer
     from adpo.analyzers.dependency_install import DependencyInstallAnalyzer
+    from adpo.analyzers.slow_step import SlowStepAnalyzer
 
     cases = sd.edge_case_runs()
     assert SlowStepAnalyzer().analyze([cases["zero_steps"]]) == []

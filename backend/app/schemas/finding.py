@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from app.models.finding import Finding
 
 
 class EstimatedSavingsOut(BaseModel):
@@ -23,7 +28,7 @@ class FindingOut(BaseModel):
     estimated_savings_range: EstimatedSavingsOut | None
 
     @classmethod
-    def from_model(cls, finding: "app.models.finding.Finding") -> "FindingOut":  # type: ignore[name-defined]
+    def from_model(cls, finding: Finding) -> FindingOut:
         savings = None
         if not finding.estimated_savings_unknown or finding.estimated_savings_basis:
             savings = EstimatedSavingsOut(

@@ -16,6 +16,7 @@ The user-to-server OAuth token (who is logged in) is handled separately in
 `app.api.v1.auth` / `app.core.security` and stored encrypted in
 `GitHubToken`; it is deliberately not minted here.
 """
+
 from __future__ import annotations
 
 import time
@@ -71,9 +72,7 @@ class InstallationTokenCache:
 _installation_token_cache = InstallationTokenCache()
 
 
-def get_installation_token(
-    settings: Settings, installation_id: int, *, http_client: httpx.Client | None = None
-) -> str:
+def get_installation_token(settings: Settings, installation_id: int, *, http_client: httpx.Client | None = None) -> str:
     """Returns a valid installation access token, minting a new one via the
     GitHub API if the cached one is missing or near expiry."""
     cached = _installation_token_cache.get(installation_id)
@@ -101,9 +100,7 @@ def get_installation_token(
     if response.status_code == 404:
         raise GitHubAuthError(f"installation {installation_id} not found or App was uninstalled")
     if response.status_code >= 400:
-        raise GitHubAuthError(
-            f"failed to mint installation token: {response.status_code} {response.text[:300]}"
-        )
+        raise GitHubAuthError(f"failed to mint installation token: {response.status_code} {response.text[:300]}")
 
     data = response.json()
     token = data["token"]

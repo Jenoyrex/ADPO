@@ -1,7 +1,6 @@
 from adpo.analyzers.historical_regression import (
-    HistoricalRegressionAnalyzer,
-    RegressionConfig,
     WORKFLOW_TOTAL_KEY,
+    HistoricalRegressionAnalyzer,
 )
 from adpo.models import Confidence, Severity
 from tests.fixtures import synthetic_data as sd
@@ -62,6 +61,7 @@ def test_a_single_outlier_run_is_not_flagged_as_regression():
     # will still look like baseline.
     import random
     from datetime import timedelta
+
     from tests.fixtures.synthetic_data import BASE_TIME, make_job, make_run
 
     rng = random.Random(123)
@@ -79,9 +79,7 @@ def test_a_single_outlier_run_is_not_flagged_as_regression():
 
 def test_confidence_requires_consistency_not_just_sample_size():
     runs = sd.regression_runs()
-    build_finding = next(
-        f for f in HistoricalRegressionAnalyzer().analyze(runs) if f.metrics["key"] == "build"
-    )
+    build_finding = next(f for f in HistoricalRegressionAnalyzer().analyze(runs) if f.metrics["key"] == "build")
     assert build_finding.confidence in (Confidence.MEDIUM, Confidence.HIGH)
 
 

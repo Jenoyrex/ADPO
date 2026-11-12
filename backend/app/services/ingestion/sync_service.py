@@ -14,6 +14,7 @@ is stored as-is and simply gets updated in place on the next sync once it
 finishes - there is no special-case handling needed because every field is
 nullable exactly where GitHub's own data can be absent.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -90,9 +91,7 @@ def sync_repository(db: Session, repository: Repository, client: GitHubClient) -
 def _sync_workflows(db: Session, repository: Repository, client: GitHubClient, result: SyncResult) -> None:
     existing = {
         w.github_workflow_id: w
-        for w in db.execute(
-            select(Workflow).where(Workflow.repository_id == repository.id)
-        ).scalars()
+        for w in db.execute(select(Workflow).where(Workflow.repository_id == repository.id)).scalars()
     }
 
     for raw in client.list_workflows(repository.owner_login, repository.name):

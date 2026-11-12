@@ -12,6 +12,7 @@ means every analyzer is testable by constructing these dataclasses
 directly, with no need for a real GitHub API connection or fixtures
 files on disk.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -22,6 +23,7 @@ from typing import Any, Dict, List, Optional
 
 class Severity(str, Enum):
     """Impact magnitude of a finding, not a measure of certainty."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -35,6 +37,7 @@ class Confidence(str, Enum):
     huge potential impact (HIGH severity) but be based on only a couple of
     data points (LOW confidence), or vice versa.
     """
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"

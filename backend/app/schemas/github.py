@@ -1,5 +1,6 @@
 """Schemas for data read live from the GitHub API (not our DB) -
 `GET /api/v1/github/repositories`."""
+
 from __future__ import annotations
 
 from pydantic import BaseModel

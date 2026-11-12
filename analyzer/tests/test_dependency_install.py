@@ -50,8 +50,8 @@ def test_savings_are_empirically_derived_from_variance():
 def test_stable_uncached_install_marks_savings_unknown():
     # If duration is uncached AND stable (no variance), we can't anchor a
     # savings number to any observed faster run.
-    import random
     from datetime import timedelta
+
     from tests.fixtures.synthetic_data import BASE_TIME, make_job, make_run
 
     runs = []
@@ -74,6 +74,7 @@ def test_duplicate_job_occurrence_detected():
     # this should be surfaced as a metric.
     import random
     from datetime import timedelta
+
     from tests.fixtures.synthetic_data import BASE_TIME, make_job, make_run
 
     rng = random.Random(11)
@@ -81,12 +82,14 @@ def test_duplicate_job_occurrence_detected():
     for i in range(6):
         day = BASE_TIME + timedelta(days=i)
         job1, _ = make_job(
-            "matrix_a", day,
+            "matrix_a",
+            day,
             [{"name": "Install dependencies", "duration": 60 + rng.uniform(-10, 10), "run": "npm ci"}],
             needs=[],
         )
         job2, _ = make_job(
-            "matrix_b", day,
+            "matrix_b",
+            day,
             [{"name": "Install dependencies", "duration": 65 + rng.uniform(-10, 10), "run": "npm ci"}],
             needs=[],
         )

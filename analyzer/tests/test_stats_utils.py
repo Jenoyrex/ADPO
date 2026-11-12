@@ -38,7 +38,7 @@ def test_percentile_single_value():
 def test_percentile_empty_raises():
     try:
         percentile([], 50)
-        assert False, "expected ValueError"
+        raise AssertionError("expected ValueError")
     except ValueError:
         pass
 

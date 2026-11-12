@@ -1,4 +1,5 @@
 """Declarative base shared by every ORM model."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

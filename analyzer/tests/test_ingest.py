@@ -1,7 +1,6 @@
 import pytest
 
-from adpo.ingest import parse_step, parse_job, parse_workflow_run, parse_workflow_runs
-
+from adpo.ingest import parse_job, parse_step, parse_workflow_run, parse_workflow_runs
 
 RAW_RUN = {
     "run_id": "1001",
@@ -26,14 +25,18 @@ RAW_RUN = {
             "needs": [],
             "steps": [
                 {
-                    "number": 1, "name": "Checkout", "status": "completed",
+                    "number": 1,
+                    "name": "Checkout",
+                    "status": "completed",
                     "conclusion": "success",
                     "started_at": "2024-01-01T00:00:05Z",
                     "completed_at": "2024-01-01T00:00:09Z",
                     "uses": "actions/checkout@v4",
                 },
                 {
-                    "number": 2, "name": "Install", "status": "completed",
+                    "number": 2,
+                    "name": "Install",
+                    "status": "completed",
                     "conclusion": "success",
                     "started_at": "2024-01-01T00:00:09Z",
                     "completed_at": "2024-01-01T00:01:39Z",

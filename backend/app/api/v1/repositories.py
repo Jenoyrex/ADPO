@@ -47,11 +47,7 @@ def list_repositories(user: User = Depends(get_current_user), db: Session = Depe
     installation_ids = _owned_installation_ids(db, user)
     if not installation_ids:
         return []
-    return list(
-        db.execute(
-            select(Repository).where(Repository.installation_id.in_(installation_ids))
-        ).scalars()
-    )
+    return list(db.execute(select(Repository).where(Repository.installation_id.in_(installation_ids))).scalars())
 
 
 @router.post("", response_model=RepositoryOut, status_code=status.HTTP_201_CREATED)

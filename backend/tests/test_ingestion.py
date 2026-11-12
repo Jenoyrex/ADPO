@@ -1,6 +1,7 @@
 """Ingestion service tests: idempotency, multi-workflow/run handling, and
 resilience to missing jobs/steps - using a fake GitHub client so these
 tests exercise only the normalize-and-upsert logic, not HTTP."""
+
 from __future__ import annotations
 
 from sqlalchemy import select

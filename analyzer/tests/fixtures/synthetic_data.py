@@ -14,6 +14,7 @@ Covers the scenarios called for by the ADPO spec:
                                       in-progress jobs, dangling `needs`, etc.)
   * missing_data helpers           - empty history / single-run history
 """
+
 from __future__ import annotations
 
 import itertools
@@ -125,7 +126,9 @@ def make_run(
 ) -> WorkflowRun:
     if conclusion is None:
         concs = [j.conclusion for j in jobs]
-        conclusion = "failure" if "failure" in concs else ("success" if concs and all(c == "success" for c in concs) else None)
+        conclusion = (
+            "failure" if "failure" in concs else ("success" if concs and all(c == "success" for c in concs) else None)
+        )
     rn = run_number if run_number is not None else _next_run_number()
     rid = run_id or f"run-{rn}-attempt-{run_attempt}"
     created = BASE_TIME + timedelta(hours=created_offset_hours)
@@ -341,7 +344,7 @@ def failures_runs(n: int = 12, seed: int = 5) -> List[WorkflowRun]:
         day = BASE_TIME + timedelta(days=i)
 
         # flaky_e2e: fails roughly 1 in 3 times (intermittent, not chronic)
-        e2e_fails = (i % 3 == 0)
+        e2e_fails = i % 3 == 0
         e2e_job, _ = make_job(
             "flaky_e2e",
             day,
@@ -359,7 +362,7 @@ def failures_runs(n: int = 12, seed: int = 5) -> List[WorkflowRun]:
         )
 
         # chronic_fail_job: fails in 11/12 runs (genuinely broken)
-        chronic_fails = (i != 6)
+        chronic_fails = i != 6
         chronic_job, _ = make_job(
             "chronic_fail_job",
             day,
@@ -511,16 +514,31 @@ def edge_case_runs() -> Dict[str, WorkflowRun]:
         started_at=BASE_TIME,
         completed_at=None,
         steps=[
-            Step(name="Checkout", number=1, status="completed", conclusion="success",
-                 started_at=BASE_TIME, completed_at=BASE_TIME + timedelta(seconds=4)),
-            Step(name="Long step", number=2, status="in_progress", conclusion=None,
-                 started_at=BASE_TIME + timedelta(seconds=4), completed_at=None),
+            Step(
+                name="Checkout",
+                number=1,
+                status="completed",
+                conclusion="success",
+                started_at=BASE_TIME,
+                completed_at=BASE_TIME + timedelta(seconds=4),
+            ),
+            Step(
+                name="Long step",
+                number=2,
+                status="in_progress",
+                conclusion=None,
+                started_at=BASE_TIME + timedelta(seconds=4),
+                completed_at=None,
+            ),
         ],
         needs=[],
     )
     cases["job_in_progress"] = make_run(
-        "EdgeCaseWF", [inflight_job], run_number=_next_run_number(),
-        conclusion=None, created_offset_hours=1001,
+        "EdgeCaseWF",
+        [inflight_job],
+        run_number=_next_run_number(),
+        conclusion=None,
+        created_offset_hours=1001,
     )
 
     # (c) job referencing a `needs` target that doesn't exist in this run

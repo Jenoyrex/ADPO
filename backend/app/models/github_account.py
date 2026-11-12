@@ -18,14 +18,20 @@ Splitting these avoids conflating "who is logged in" with "which repos are
 reachable," which is exactly the distinction GitHub Apps are designed
 around.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import BigInteger, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.repository import Repository
+    from app.models.user import User
 
 
 class GitHubToken(TimestampMixin, Base):
@@ -39,9 +45,7 @@ class GitHubToken(TimestampMixin, Base):
     __tablename__ = "github_tokens"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False
-    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
 
     access_token_encrypted: Mapped[str] = mapped_column(String(2048), nullable=False)
     refresh_token_encrypted: Mapped[str | None] = mapped_column(String(2048), nullable=True)
@@ -63,11 +67,7 @@ class GitHubInstallation(TimestampMixin, Base):
     account_login: Mapped[str] = mapped_column(String(255), nullable=False)
     account_type: Mapped[str] = mapped_column(String(32), nullable=False)  # "User" | "Organization"
 
-    connected_by_user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )
+    connected_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
     connected_by_user: Mapped["User"] = relationship(back_populates="installations")
-    repositories: Mapped[list["Repository"]] = relationship(
-        back_populates="installation", cascade="all, delete-orphan"
-    )
+    repositories: Mapped[list["Repository"]] = relationship(back_populates="installation", cascade="all, delete-orphan")

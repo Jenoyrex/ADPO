@@ -128,7 +128,10 @@ def test_cannot_access_another_users_repository(authed_client, db_session):
     db_session.add(other_user)
     db_session.commit()
     other_installation = GitHubInstallation(
-        installation_id=111222, account_login="other-org", account_type="Organization", connected_by_user_id=other_user.id
+        installation_id=111222,
+        account_login="other-org",
+        account_type="Organization",
+        connected_by_user_id=other_user.id,
     )
     db_session.add(other_installation)
     db_session.commit()

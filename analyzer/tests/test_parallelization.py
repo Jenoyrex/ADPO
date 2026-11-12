@@ -83,11 +83,10 @@ def test_inconsistent_ordering_does_not_get_flagged():
     # If two independent jobs sometimes overlap and sometimes don't
     # (inconsistent pattern), that is weaker evidence and should not
     # clear the default consistency threshold.
-    import random
     from datetime import timedelta
+
     from tests.fixtures.synthetic_data import BASE_TIME, make_job, make_run
 
-    rng = random.Random(21)
     runs = []
     for i in range(8):
         day = BASE_TIME + timedelta(days=i)
@@ -103,8 +102,8 @@ def test_inconsistent_ordering_does_not_get_flagged():
 
 
 def test_short_jobs_below_duration_floor_are_ignored():
-    import random
     from datetime import timedelta
+
     from tests.fixtures.synthetic_data import BASE_TIME, make_job, make_run
 
     runs = []
@@ -122,8 +121,8 @@ def test_transitive_dependency_excluded():
     # a <- b <- c (c needs b, b needs a): a and c are transitively related
     # and must never be proposed as a parallel candidate even though
     # neither directly lists the other.
-    import random
     from datetime import timedelta
+
     from tests.fixtures.synthetic_data import BASE_TIME, make_job, make_run
 
     runs = []

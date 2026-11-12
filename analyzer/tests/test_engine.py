@@ -87,7 +87,7 @@ def test_engine_strict_mode_reraises():
     engine = AnalysisEngine(analyzers=[ExplodingAnalyzer()], strict=True)
     try:
         engine.run([])
-        assert False, "expected RuntimeError to propagate"
+        raise AssertionError("expected RuntimeError to propagate")
     except RuntimeError:
         pass
 
@@ -118,6 +118,5 @@ def test_every_finding_has_required_fields_across_full_engine_run():
         # concrete bounds or explicitly marked unknown - never silently absent
         assert f.estimated_savings_range is not None
         assert f.estimated_savings_range.unknown or (
-            f.estimated_savings_range.low_seconds is not None
-            and f.estimated_savings_range.high_seconds is not None
+            f.estimated_savings_range.low_seconds is not None and f.estimated_savings_range.high_seconds is not None
         )

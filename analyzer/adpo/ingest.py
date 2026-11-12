@@ -37,6 +37,7 @@ error, wherever a sensible default exists):
       ]
     }
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -93,9 +94,7 @@ def parse_workflow_run(raw: Dict[str, Any]) -> WorkflowRun:
     jobs_raw = raw.get("jobs") or []
     created_at = _parse_dt(raw.get("created_at") or raw.get("run_started_at"))
     if created_at is None:
-        raise ValueError(
-            "workflow run is missing a usable 'created_at' (or 'run_started_at') timestamp"
-        )
+        raise ValueError("workflow run is missing a usable 'created_at' (or 'run_started_at') timestamp")
     return WorkflowRun(
         run_id=str(raw.get("run_id") or raw.get("id") or "unknown-run"),
         workflow_name=raw.get("workflow_name") or raw.get("name") or "unknown-workflow",

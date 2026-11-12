@@ -1,5 +1,6 @@
 """Import every model so `Base.metadata` is fully populated for Alembic
 autogenerate and for `Base.metadata.create_all()` in tests."""
+
 from app.db.base import Base
 from app.models.analysis import Analysis
 from app.models.finding import Finding

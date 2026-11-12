@@ -1,6 +1,7 @@
 """Runs the locked `adpo.AnalysisEngine` over a repository's stored run
 history and persists the results. No analysis logic lives here - this is
 orchestration + persistence only."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -9,7 +10,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from adpo.engine import AnalysisEngine
-
 from app.core.logging import get_logger, log_extra
 from app.models.analysis import Analysis
 from app.models.finding import Finding
@@ -82,9 +82,7 @@ def run_analysis(db: Session, repository_id: int) -> Analysis:
         analysis.status = "failed"
         analysis.error_message = str(exc)
         analysis.completed_at = datetime.now(timezone.utc)
-        logger.exception(
-            "analysis failed", extra=log_extra(repository_id=repository_id, analysis_id=analysis.id)
-        )
+        logger.exception("analysis failed", extra=log_extra(repository_id=repository_id, analysis_id=analysis.id))
 
     db.commit()
     db.refresh(analysis)

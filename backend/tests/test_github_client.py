@@ -45,9 +45,7 @@ def test_pagination_link_header_matching_an_unconstrained_route_would_loop_forev
 
     with respx.mock:
         respx.get(path).mock(
-            return_value=httpx.Response(
-                200, json=[{"id": 1}], headers={"Link": f'<{page2_url}>; rel="next"'}
-            )
+            return_value=httpx.Response(200, json=[{"id": 1}], headers={"Link": f'<{page2_url}>; rel="next"'})
         )
         with httpx.Client(timeout=5.0) as c:
             r1 = c.get(path, params={"per_page": 100})
@@ -69,9 +67,7 @@ def test_pagination_stops_at_max_pages_against_a_self_referencing_link(monkeypat
     monkeypatch.setattr(client_module.GitHubClient, "MAX_PAGES", 3)
     path = f"{BASE}/repos/octo/widgets/actions/workflows"
 
-    respx.get(path).mock(
-        return_value=httpx.Response(200, json=[{"id": 1}], headers={"Link": f'<{path}>; rel="next"'})
-    )
+    respx.get(path).mock(return_value=httpx.Response(200, json=[{"id": 1}], headers={"Link": f'<{path}>; rel="next"'}))
 
     with GitHubClient("tok", base_url=BASE) as client:
         result = client.list_workflows("octo", "widgets")

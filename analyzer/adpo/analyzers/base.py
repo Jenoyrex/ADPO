@@ -1,4 +1,5 @@
 """Common contract shared by every deterministic analyzer."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

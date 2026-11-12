@@ -5,6 +5,7 @@ deliberately-flawed synthetic run history and print the findings as JSON.
 
 Run with:  python3 examples/demo.py
 """
+
 import json
 import sys
 from pathlib import Path
@@ -12,8 +13,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
 
-from adpo.engine import AnalysisEngine  # noqa: E402
 from fixtures import synthetic_data as sd  # noqa: E402
+
+from adpo.engine import AnalysisEngine  # noqa: E402
 
 
 def main() -> None:

@@ -5,6 +5,7 @@ required secrets default to empty string and are validated lazily by the
 services that need them, so `GET /health` and the test suite can still run
 without a fully configured GitHub App.
 """
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -38,9 +39,9 @@ class Settings(BaseSettings):
         # psycopg2 dialect, but this project only ships psycopg v3 - so force
         # the +psycopg driver when the URL doesn't already name one.
         if v.startswith("postgresql://"):
-            return "postgresql+psycopg://" + v[len("postgresql://"):]
+            return "postgresql+psycopg://" + v[len("postgresql://") :]
         if v.startswith("postgres://"):
-            return "postgresql+psycopg://" + v[len("postgres://"):]
+            return "postgresql+psycopg://" + v[len("postgres://") :]
         return v
 
     # --- Token encryption at rest ---
