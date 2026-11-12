@@ -1,0 +1,35 @@
+# Public repositories used for the ADPO evaluation.
+# Selection: popular projects with an active GitHub Actions CI workflow, spread
+# across ecosystems so per-language CI habits (matrix size, caching, install
+# tooling) are represented. One primary CI workflow per repo, named by file.
+# This is a convenience sample of well-maintained projects, not a random
+# sample of GitHub: see REPORT.md "Threats to validity".
+repos:
+  # Python
+  - {repo: pallets/flask, workflow: tests.yaml, reason: "Small, mature Python matrix (versions x OS); low-noise baseline."}
+  - {repo: pydantic/pydantic, workflow: ci.yml, reason: "Python + Rust core; large matrix, many dependency-install steps."}
+  - {repo: encode/httpx, workflow: test-suite.yml, reason: "Compact Python suite; few jobs, good for step-level detail."}
+  - {repo: fastapi/fastapi, workflow: test.yml, reason: "Very active Python project with frequent dependency-bot PRs."}
+  - {repo: psf/black, workflow: test.yml, reason: "Python matrix across OSes; known mypyc build variance."}
+  # JavaScript / TypeScript
+  - {repo: vitejs/vite, workflow: ci.yml, reason: "Large pnpm monorepo; heavy install + build steps."}
+  - {repo: expressjs/express, workflow: ci.yml, reason: "Wide Node.js version matrix, short jobs."}
+  - {repo: vuejs/core, workflow: ci.yml, reason: "TypeScript monorepo with separate unit/e2e/lint jobs."}
+  - {repo: sveltejs/svelte, workflow: ci.yml, reason: "TypeScript compiler; mix of test and lint jobs."}
+  # Go
+  - {repo: gohugoio/hugo, workflow: test.yml, reason: "Go across 3 OSes; long Windows jobs."}
+  - {repo: spf13/cobra, workflow: test.yml, reason: "Small Go library, many Go versions; low-activity baseline."}
+  - {repo: prometheus/prometheus, workflow: ci.yml, reason: "Large Go service with many independent jobs (parallelization)."}
+  # Rust
+  - {repo: BurntSushi/ripgrep, workflow: ci.yml, reason: "Rust cross-compilation matrix; long builds."}
+  - {repo: tokio-rs/tokio, workflow: ci.yml, reason: "Very large Rust job graph with explicit needs edges."}
+  # JVM
+  - {repo: square/okhttp, workflow: build.yml, reason: "Gradle/Kotlin build; JVM warm-up and Gradle caching."}
+  - {repo: junit-team/junit5, workflow: main.yml, reason: "Gradle with build caching across JDK versions."}
+  # Ruby / PHP / Elixir
+  - {repo: jekyll/jekyll, workflow: ci.yml, reason: "Ruby + bundler install steps across Ruby versions."}
+  - {repo: laravel/framework, workflow: tests.yml, reason: "PHP matrix with composer installs and DB services."}
+  - {repo: elixir-lang/elixir, workflow: ci.yml, reason: "Erlang/OTP version matrix; compiler build from source."}
+  # C / C++
+  - {repo: fmtlib/fmt, workflow: linux.yml, reason: "C++ compiler x standard matrix; CMake builds."}
+  - {repo: curl/curl, workflow: linux.yml, reason: "Very wide C build matrix with apt-get installs."}

@@ -28,3 +28,8 @@ Thumbs.db
 
 # Node (frontend, future)
 node_modules/
+
+# Research: raw collected data and personal study notes stay local
+research/data/raw/
+STUDY_NOTES.md
+.ipynb_checkpoints/
