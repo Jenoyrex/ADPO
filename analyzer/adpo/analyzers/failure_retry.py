@@ -15,11 +15,12 @@ remediation:
      than one attempt; the wasted time is measured directly from the
      duration of the superseded (non-final) attempt(s), not estimated.
 """
+
 from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from ..models import Confidence, EstimatedSavings, Finding, Severity, WorkflowRun
 from .base import BaseAnalyzer
@@ -37,7 +38,7 @@ class FailureRetryConfig:
 class FailureRetryAnalyzer(BaseAnalyzer):
     analyzer_type = "failure_retry"
 
-    def __init__(self, config: FailureRetryConfig = None):
+    def __init__(self, config: Optional[FailureRetryConfig] = None):
         self.config = config or FailureRetryConfig()
 
     def analyze(self, runs: List[WorkflowRun]) -> List[Finding]:
@@ -100,14 +101,14 @@ class FailureRetryAnalyzer(BaseAnalyzer):
 
             evidence = [
                 f"Job '{job_name}' failed {s['failure']} of {total} run(s) with a "
-                f"conclusive outcome (failure rate {rate*100:.0f}%).",
+                f"conclusive outcome (failure rate {rate * 100:.0f}%).",
                 f"Example failing run IDs: {', '.join(f_run_ids[:5])}" + (" ..." if len(f_run_ids) > 5 else ""),
             ]
             if fail_durations:
                 sorted_fd = sorted(fail_durations)
                 evidence.append(
                     f"Failing runs still consumed compute time before failing "
-                    f"(median {sorted_fd[len(sorted_fd)//2]:.0f}s)."
+                    f"(median {sorted_fd[len(sorted_fd) // 2]:.0f}s)."
                 )
 
             if fail_durations:
@@ -134,9 +135,9 @@ class FailureRetryAnalyzer(BaseAnalyzer):
                 )
 
             title = (
-                f"Job '{job_name}' fails consistently ({rate*100:.0f}% of runs)"
+                f"Job '{job_name}' fails consistently ({rate * 100:.0f}% of runs)"
                 if is_chronic
-                else f"Job '{job_name}' is flaky ({rate*100:.0f}% failure rate)"
+                else f"Job '{job_name}' is flaky ({rate * 100:.0f}% failure rate)"
             )
             recommendation = (
                 "This job fails far more often than it succeeds and does not show the "
@@ -213,7 +214,7 @@ class FailureRetryAnalyzer(BaseAnalyzer):
         example_run_numbers = [str(rn) for rn, _, _ in wasted_incidents[:5]]
         evidence = [
             f"{len(wasted_incidents)} of {total_run_numbers} distinct run(s) "
-            f"({retry_rate*100:.0f}%) required more than one attempt to reach a final "
+            f"({retry_rate * 100:.0f}%) required more than one attempt to reach a final "
             f"outcome.",
             f"Total measured compute time spent on non-final (superseded) attempts: "
             f"{total_wasted:.0f}s across the observed history (average {avg_wasted:.0f}s "

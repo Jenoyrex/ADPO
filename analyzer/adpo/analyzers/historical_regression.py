@@ -9,6 +9,7 @@ Slow Job / Slow Step analyzers) or having had a single one-off slow run
 (explicitly guarded against here by comparing two *windows* of runs
 rather than any two individual runs).
 """
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -37,7 +38,7 @@ class RegressionConfig:
 class HistoricalRegressionAnalyzer(BaseAnalyzer):
     analyzer_type = "historical_regression"
 
-    def __init__(self, config: RegressionConfig = None):
+    def __init__(self, config: Optional[RegressionConfig] = None):
         self.config = config or RegressionConfig()
 
     def analyze(self, runs: List[WorkflowRun]) -> List[Finding]:
@@ -116,7 +117,7 @@ class HistoricalRegressionAnalyzer(BaseAnalyzer):
             f"{baseline_n} observed run(s) (e.g. {', '.join(baseline_run_ids[:3])}).",
             f"{subject}: recent median is {recent_median:.0f}s over the most recent "
             f"{recent_n} run(s) (e.g. {', '.join(recent_run_ids[:3])}).",
-            f"That is a {pct_change*100:.0f}% increase ({abs_change:.0f}s), and "
+            f"That is a {pct_change * 100:.0f}% increase ({abs_change:.0f}s), and "
             f"{consistent_count}/{recent_n} recent runs exceeded the 75th percentile of "
             f"baseline performance ({baseline_p75:.0f}s) - i.e. the slowdown is not "
             f"attributable to a single outlier run.",

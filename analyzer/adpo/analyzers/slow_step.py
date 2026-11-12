@@ -9,6 +9,7 @@ job's median duration (not the whole workflow), which localizes exactly
 which step inside a job deserves attention - a slow job is a symptom, a
 slow step is (closer to) a cause.
 """
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -34,7 +35,7 @@ class SlowStepConfig:
 class SlowStepAnalyzer(BaseAnalyzer):
     analyzer_type = "slow_step"
 
-    def __init__(self, config: SlowStepConfig = None):
+    def __init__(self, config: Optional[SlowStepConfig] = None):
         self.config = config or SlowStepConfig()
 
     def analyze(self, runs: List[WorkflowRun]) -> List[Finding]:
@@ -71,9 +72,7 @@ class SlowStepAnalyzer(BaseAnalyzer):
             share: Optional[float] = (med / job_med) if job_med and job_med > 0 else None
 
             is_slow_absolute = med >= cfg.absolute_severe_seconds
-            is_slow_share = (
-                share is not None and med >= cfg.min_duration_seconds and share >= cfg.min_share_of_job
-            )
+            is_slow_share = share is not None and med >= cfg.min_duration_seconds and share >= cfg.min_share_of_job
             if not (is_slow_absolute or is_slow_share):
                 continue
 
@@ -91,12 +90,10 @@ class SlowStepAnalyzer(BaseAnalyzer):
             ]
             if share is not None and job_med is not None:
                 evidence.append(
-                    f"That is {share*100:.0f}% of job '{job_name}''s median total "
-                    f"duration ({job_med:.0f}s)."
+                    f"That is {share * 100:.0f}% of job '{job_name}''s median total duration ({job_med:.0f}s)."
                 )
             evidence.append(
-                f"Observed range: {best:.0f}s (fastest) to {max(durations):.0f}s "
-                f"(slowest), p90={p90:.0f}s."
+                f"Observed range: {best:.0f}s (fastest) to {max(durations):.0f}s (slowest), p90={p90:.0f}s."
             )
             evidence.append(f"Sample run IDs: {', '.join(run_ids[:5])}" + (" ..." if n > 5 else ""))
 
@@ -108,7 +105,7 @@ class SlowStepAnalyzer(BaseAnalyzer):
                         f"The step '{step_name}' within job '{job_name}' takes {med:.0f}s "
                         f"(median), "
                         + (
-                            f"which is {share*100:.0f}% of that job's total time."
+                            f"which is {share * 100:.0f}% of that job's total time."
                             if share is not None
                             else "which exceeds the absolute duration threshold on its own."
                         )
@@ -182,8 +179,5 @@ class SlowStepAnalyzer(BaseAnalyzer):
     def _recommendation(step_name: str, cv) -> str:
         base = f"Profile or break down the '{step_name}' step directly to find its own bottleneck."
         if cv is not None and cv >= 0.25:
-            base += (
-                " High run-to-run variance suggests network, cache, or runner "
-                "contention is a likely factor."
-            )
+            base += " High run-to-run variance suggests network, cache, or runner contention is a likely factor."
         return base

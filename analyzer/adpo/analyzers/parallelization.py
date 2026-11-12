@@ -34,6 +34,7 @@ None of these can be distinguished from run metadata alone, so:
     true achievable savings may genuinely be zero if parallelization
     turns out to be unsafe.
 """
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -57,7 +58,7 @@ class ParallelizationConfig:
 class ParallelizationAnalyzer(BaseAnalyzer):
     analyzer_type = "potential_parallelization"
 
-    def __init__(self, config: ParallelizationConfig = None):
+    def __init__(self, config: Optional[ParallelizationConfig] = None):
         self.config = config or ParallelizationConfig()
 
     def analyze(self, runs: List[WorkflowRun]) -> List[Finding]:
@@ -83,9 +84,7 @@ class ParallelizationAnalyzer(BaseAnalyzer):
                 if finding:
                     findings.append(finding)
 
-        findings.sort(
-            key=lambda f: f.metrics.get("theoretical_best_case_savings_seconds", 0), reverse=True
-        )
+        findings.sort(key=lambda f: f.metrics.get("theoretical_best_case_savings_seconds", 0), reverse=True)
         return findings
 
     @staticmethod
@@ -129,19 +128,21 @@ class ParallelizationAnalyzer(BaseAnalyzer):
                 continue
             if job_a.conclusion != "success" or job_b.conclusion != "success":
                 continue
-            if None in (job_a.started_at, job_a.completed_at, job_b.started_at, job_b.completed_at):
+            a_start, a_end, b_start, b_end = job_a.started_at, job_a.completed_at, job_b.started_at, job_b.completed_at
+            a_dur, b_dur = job_a.duration_seconds, job_b.duration_seconds
+            if a_start is None or a_end is None or b_start is None or b_end is None or a_dur is None or b_dur is None:
                 continue
 
             checked += 1
-            a_durations.append(job_a.duration_seconds)
-            b_durations.append(job_b.duration_seconds)
+            a_durations.append(a_dur)
+            b_durations.append(b_dur)
 
-            overlap = min(job_a.completed_at, job_b.completed_at) - max(job_a.started_at, job_b.started_at)
+            overlap = min(a_end, b_end) - max(a_start, b_start)
             overlap_seconds = overlap.total_seconds()
 
             if overlap_seconds <= cfg.overlap_epsilon_seconds:
                 sequential_count += 1
-                if job_a.completed_at <= job_b.started_at:
+                if a_end <= b_start:
                     a_first_count += 1
                 sample_run_ids.append(run.run_id)
 
@@ -171,10 +172,10 @@ class ParallelizationAnalyzer(BaseAnalyzer):
             f"'{workflow_name}'.",
             f"Across {checked} run(s) where both jobs completed successfully with "
             f"valid timing data, they did not overlap in execution in "
-            f"{sequential_count} ({consistency*100:.0f}%) of them.",
+            f"{sequential_count} ({consistency * 100:.0f}%) of them.",
             f"When sequential, '{usual_first}' ran before '{usual_second}' in "
             f"{max(a_first_count, b_first_count)}/{sequential_count} instance(s) "
-            f"(order consistency {order_consistency*100:.0f}%).",
+            f"(order consistency {order_consistency * 100:.0f}%).",
             f"Median durations: '{a_name}'={a_med:.0f}s, '{b_name}'={b_med:.0f}s.",
             f"Example run IDs: {', '.join(sample_run_ids[:5])}" + (" ..." if len(sample_run_ids) > 5 else ""),
         ]

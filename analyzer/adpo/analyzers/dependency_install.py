@@ -13,12 +13,13 @@ command - which are either:
       run-to-run duration variance, which is a *signal* (not proof) that
       the cache may not be hitting reliably.
 """
+
 from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
 from statistics import median
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from ..models import Confidence, EstimatedSavings, Finding, Severity, Step, WorkflowRun
 from ..stats_utils import coefficient_of_variation, percentile
@@ -27,21 +28,42 @@ from .base import BaseAnalyzer
 InstallKey = Tuple[str, str]  # (job_name, step_name)
 
 INSTALL_KEYWORDS = [
-    "npm install", "npm ci", "yarn install", "yarn add", "pnpm install",
-    "pip install", "pip3 install", "poetry install", "pipenv install",
-    "bundle install", "gem install",
-    "go mod download", "go get ",
-    "mvn install", "mvn dependency", "mvn -b install",
-    "gradle build", "gradle dependencies", "./gradlew build",
-    "apt-get install", "apt install", "yum install", "apk add",
+    "npm install",
+    "npm ci",
+    "yarn install",
+    "yarn add",
+    "pnpm install",
+    "pip install",
+    "pip3 install",
+    "poetry install",
+    "pipenv install",
+    "bundle install",
+    "gem install",
+    "go mod download",
+    "go get ",
+    "mvn install",
+    "mvn dependency",
+    "mvn -b install",
+    "gradle build",
+    "gradle dependencies",
+    "./gradlew build",
+    "apt-get install",
+    "apt install",
+    "yum install",
+    "apk add",
     "composer install",
-    "cargo build", "cargo fetch",
+    "cargo build",
+    "cargo fetch",
     "pod install",
 ]
 
 CACHE_AWARE_SETUP_ACTIONS = {
-    "actions/setup-node", "actions/setup-python", "actions/setup-java",
-    "actions/setup-go", "actions/setup-dotnet", "ruby/setup-ruby",
+    "actions/setup-node",
+    "actions/setup-python",
+    "actions/setup-java",
+    "actions/setup-go",
+    "actions/setup-dotnet",
+    "ruby/setup-ruby",
 }
 
 
@@ -73,7 +95,7 @@ class DependencyInstallConfig:
 class DependencyInstallAnalyzer(BaseAnalyzer):
     analyzer_type = "dependency_install"
 
-    def __init__(self, config: DependencyInstallConfig = None):
+    def __init__(self, config: Optional[DependencyInstallConfig] = None):
         self.config = config or DependencyInstallConfig()
 
     def analyze(self, runs: List[WorkflowRun]) -> List[Finding]:
@@ -93,11 +115,7 @@ class DependencyInstallAnalyzer(BaseAnalyzer):
                     if _step_has_cache_action(step):
                         cache_seen = True
                         continue
-                    if (
-                        step.conclusion == "success"
-                        and step.duration_seconds is not None
-                        and _is_install_step(step)
-                    ):
+                    if step.conclusion == "success" and step.duration_seconds is not None and _is_install_step(step):
                         key = (job.name, step.name)
                         groups[key].append(
                             {

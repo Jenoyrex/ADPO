@@ -34,12 +34,13 @@ Method (summary)
    evidence the job can run any faster; the recommendation instead points
    at the Slow Step Analyzer to localize the cause.
 """
+
 from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
 from statistics import median
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from ..models import Confidence, EstimatedSavings, Finding, Severity, WorkflowRun
 from ..stats_utils import coefficient_of_variation, percentile
@@ -48,16 +49,16 @@ from .base import BaseAnalyzer
 
 @dataclass
 class SlowJobConfig:
-    min_duration_seconds: float = 180.0       # 3 minutes
-    absolute_severe_seconds: float = 600.0    # 10 minutes
-    min_share_of_workflow: float = 0.25       # 25% of total pipeline wall time
+    min_duration_seconds: float = 180.0  # 3 minutes
+    absolute_severe_seconds: float = 600.0  # 10 minutes
+    min_share_of_workflow: float = 0.25  # 25% of total pipeline wall time
     min_sample_size: int = 1
 
 
 class SlowJobAnalyzer(BaseAnalyzer):
     analyzer_type = "slow_job"
 
-    def __init__(self, config: SlowJobConfig = None):
+    def __init__(self, config: Optional[SlowJobConfig] = None):
         self.config = config or SlowJobConfig()
 
     def analyze(self, runs: List[WorkflowRun]) -> List[Finding]:
@@ -110,12 +111,9 @@ class SlowJobAnalyzer(BaseAnalyzer):
 
             run_ids = job_run_ids[job_name]
             evidence = [
-                f"Job '{job_name}' had a median duration of {med:.0f}s across {n} "
-                f"successful run(s).",
-                f"This represents {share*100:.0f}% of the workflow's median total "
-                f"duration ({workflow_median:.0f}s).",
-                f"Observed range: {best:.0f}s (fastest) to {max(durations):.0f}s "
-                f"(slowest), p90={p90:.0f}s.",
+                f"Job '{job_name}' had a median duration of {med:.0f}s across {n} successful run(s).",
+                f"This represents {share * 100:.0f}% of the workflow's median total duration ({workflow_median:.0f}s).",
+                f"Observed range: {best:.0f}s (fastest) to {max(durations):.0f}s (slowest), p90={p90:.0f}s.",
                 f"Sample run IDs: {', '.join(run_ids[:5])}" + (" ..." if n > 5 else ""),
             ]
 
@@ -126,8 +124,7 @@ class SlowJobAnalyzer(BaseAnalyzer):
                     description=(
                         f"The job '{job_name}' consistently takes a large amount of "
                         f"wall-clock time ({med:.0f}s median) relative to "
-                        + ("the rest of the workflow." if is_slow_by_share
-                           else "an absolute duration threshold.")
+                        + ("the rest of the workflow." if is_slow_by_share else "an absolute duration threshold.")
                     ),
                     evidence=evidence,
                     metrics={
@@ -199,10 +196,7 @@ class SlowJobAnalyzer(BaseAnalyzer):
 
     @staticmethod
     def _recommendation(cv, share: float) -> str:
-        base = (
-            "Investigate this job's steps to identify the largest time contributors "
-            "(see the Slow Step Analyzer)."
-        )
+        base = "Investigate this job's steps to identify the largest time contributors (see the Slow Step Analyzer)."
         if cv is not None and cv >= 0.25:
             base += (
                 " High run-to-run variance suggests network, cache, or runner "
