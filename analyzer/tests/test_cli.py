@@ -289,3 +289,20 @@ def test_rank_orders_by_severity_then_confidence():
         ]
     )
     assert [x.title for x in ranked] == ["c", "b", "a"]
+
+
+def test_run_with_unfetchable_jobs_is_skipped_not_partially_used():
+    responses = dict(FIXTURE)
+    bad = next(u for u in responses if "/jobs?" in u)
+    del responses[bad]
+
+    def transport(url, headers):
+        if "/jobs?" in url and url.split("/jobs?")[0] == bad.split("/jobs?")[0]:
+            return HttpResponse(502, {}, b"Server Error")
+        return RecordedTransport(responses)(url, headers)
+
+    client, _ = make_client(transport, max_retries=0)
+    raw = fetch_history(client, "Jenoyrex", "ADPO", max_runs=10, enrich=False)
+    skipped_id = bad.split("/runs/")[1].split("/")[0]
+    assert client.skipped_runs == [skipped_id]
+    assert all(r["run_id"].split("/")[0] != skipped_id for r in raw)

@@ -23,6 +23,7 @@ Stdlib only (urllib). Network behaviour:
 from __future__ import annotations
 
 import base64
+import functools
 import hashlib
 import json
 import os
@@ -55,6 +56,7 @@ class HttpResponse:
 Transport = Callable[[str, Dict[str, str]], HttpResponse]
 
 
+@functools.lru_cache(maxsize=1)
 def _ssl_context() -> ssl.SSLContext:
     """Verify TLS against the OS trust store when `truststore` is installed
     (corporate proxies / AV often add a root only the OS knows about),
@@ -114,6 +116,7 @@ class GitHubClient:
         self.list_ttl_seconds = list_ttl_seconds
         self.log = log
         self.requests_made = 0
+        self.skipped_runs: List[str] = []
 
     @classmethod
     def from_env(cls, cache_dir: Optional[Path] = None, **kwargs: Any) -> "GitHubClient":
@@ -235,8 +238,17 @@ class GitHubClient:
         return out
 
     def list_jobs_all_attempts(self, owner: str, repo: str, run_id: int) -> List[Dict[str, Any]]:
-        url = f"/repos/{owner}/{repo}/actions/runs/{run_id}/jobs?filter=all&per_page=100"
-        return list(self.paginate(url, "jobs"))
+        # Large job pages occasionally 502 persistently (server-side timeout);
+        # smaller pages usually succeed.
+        for per_page in (100, 30):
+            url = f"/repos/{owner}/{repo}/actions/runs/{run_id}/jobs?filter=all&per_page={per_page}"
+            try:
+                return list(self.paginate(url, "jobs"))
+            except GitHubFetchError as exc:
+                if per_page == 30 or "HTTP 5" not in str(exc):
+                    raise
+                self.log(f"adpo: jobs for run {run_id} keep failing with per_page=100, retrying with 30")
+        raise AssertionError("unreachable")  # pragma: no cover
 
     def get_file(self, owner: str, repo: str, path: str, ref: str) -> Optional[str]:
         url = f"/repos/{owner}/{repo}/contents/{urllib.parse.quote(path)}?ref={ref}"
@@ -330,7 +342,16 @@ def fetch_history(
     runs = client.list_runs(owner, repo, workflow=workflow, max_runs=max_runs, since=since)
     raw: List[Dict[str, Any]] = []
     for i, run in enumerate(runs):
-        raw.extend(build_attempts(run, client.list_jobs_all_attempts(owner, repo, run["id"])))
+        try:
+            jobs = client.list_jobs_all_attempts(owner, repo, run["id"])
+        except GitHubFetchError as exc:
+            if "HTTP 5" not in str(exc):
+                raise
+            # Never analyse a run with a partial job list; drop it and say so.
+            client.skipped_runs.append(str(run["id"]))
+            client.log(f"adpo: skipping run {run['id']}: jobs could not be fetched ({exc})")
+            continue
+        raw.extend(build_attempts(run, jobs))
         if progress:
             progress(i + 1, len(runs))
     if enrich:
