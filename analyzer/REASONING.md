@@ -13,6 +13,41 @@ take" duration, applies an industry-benchmark percentage, or asserts something i
 support a confident claim, the analyzer says so (`confidence=LOW`, or
 `estimated_savings_range.unknown=True`) instead of filling the gap with a guess.
 
+## Statistics at a glance, and what the evaluation says about them
+
+The evaluation in [`research/REPORT.md`](../research/REPORT.md) ran every analyzer on the most recent
+150 completed runs of 21 public repositories. "Evidence" links point at the section that supports
+(or challenges) each choice.
+
+| Analyzer | Statistic | Assumptions | Minimum sample | Failure modes | Evidence |
+|---|---|---|---|---|---|
+| Slow Job | Median job duration; share of the workflow's median duration; CV (SD/mean) for savings and wording | Durations of one job are comparable across runs (same work, similar runners) | `min_sample_size = 1`; confidence LOW below 4 runs | Many findings on large matrices; CV branches flip on a single slow run; findings on 1–4 runs | [b](../research/REPORT.md#b-distribution-analysis), [c](../research/REPORT.md#c-sensitivity-analysis) |
+| Slow Step | Median step duration; share of the parent job's median | As above, at step level; step timings exist (missing for some repos) | `min_sample_size = 1` | As above; repos without step data produce nothing | [b](../research/REPORT.md#b-distribution-analysis), [c](../research/REPORT.md#c-sensitivity-analysis) |
+| Historical Regression | Median of recent 40% vs median of earlier 60%; +25% and +20 s gates; share of recent runs above baseline p75 | The split point is near the change; no other drift in the baseline | 6 runs (3 + 3) | Misses gradual drift and changes outside the 60/40 split; no significance test (behaves like "significant **and** large") | [d](../research/REPORT.md#d-regression-detection) |
+| Dependency Install | Keyword match on `run`/step name; cache detection via `uses`/`with`; CV >= 0.30 for "cache possibly ineffective" | Workflow YAML is available (the Jobs API has no `run`/`uses`) | `min_sample_size = 1` | Blind without YAML enrichment; CV branch is outlier-sensitive | [b](../research/REPORT.md#b-distribution-analysis), [c](../research/REPORT.md#c-sensitivity-analysis) |
+| Failure/Retry (flaky) | Final-attempt failure rate in [5%, 85%) | Failures of one job are independent and exchangeable across runs | 3 conclusive runs (`min_sample_size`) | Rates from a handful of runs are noise; co-failures (whole-run breakage) counted as job failures; PR runs inflate failure rates; low measured precision against re-runs | [e](../research/REPORT.md#e-flakiness-rates-a-re-run-ground-truth-and-co-failures) |
+| Failure/Retry (retry waste) | Sum of job durations on superseded attempts | Earlier attempts are ingested (the CLI fetches them with `filter=all`) | 1 retried run | Backend sync without attempt backfill sees no retries | [a](../research/REPORT.md#a-data) |
+| Potential Parallelization | Share of runs where two jobs with no `needs` path never overlap | `needs` edges are known | 2 runs; consistency >= 0.75 | Without YAML `needs` almost every sequential pair is a candidate (the backend stores none today) | [c](../research/REPORT.md#c-sensitivity-analysis) |
+
+### What the evaluation changed
+
+**No analyzer behaviour changed.** One candidate came close:
+
+- **Gating "flaky" on >= 40 runs and a Jeffreys lower bound.** The rule: at least 40 conclusive runs, and the
+  one-sided 95% lower bound of Beta(failures + ½, successes + ½) >= 5%. On pull-request runs it raised
+  precision against a re-run ground truth from about 0.41 to about 0.65 (non-overlapping intervals). But recall
+  fell by 0.202, and the adoption limit stated before the final table was 0.20. It was briefly committed on a
+  preliminary table and then reverted. It is the first change to revisit once the hand labels exist. Details:
+  [REPORT.md section e](../research/REPORT.md#e-flakiness-rates-a-re-run-ground-truth-and-co-failures).
+- **Excluding co-failures from the flaky rate:** recall fell by more than half; rejected.
+- **The regression rule:** it behaves like "Mann-Whitney significant **and** large". No ground truth shows an
+  alternative is better.
+- **The CV thresholds:** outlier-sensitive, but there is no ground truth for "cache ineffective". Tracked as a
+  follow-up.
+
+The CLI's fetch layer did change (YAML enrichment, attempt history), which matters most for the
+parallelization and dependency-install analyzers.
+
 ---
 
 ## 1. Slow Job Analyzer
@@ -223,6 +258,18 @@ bug). The analyzer uses a rate band (`flaky_min_rate=0.05` to
 severity curve, and recommendation text — critically, the chronic-failure
 recommendation explicitly says this doesn't look like a retry/flakiness problem, so a
 team doesn't waste effort adding retries to a job that's simply broken.
+
+**Known weakness: small samples (from the evaluation).** A raw rate from a handful of runs is
+mostly noise. With 3 runs, a single failure is a 33% "failure rate". A Bayesian prior alone does not fix
+this: with no runs, the Jeffreys posterior Beta(½, ½) has mean 0.5, so a run minimum is needed as
+well. On the evaluation data, failure rates estimated from two independent samples of N runs rank
+jobs consistently (split-half Spearman >= 0.7) only from N = 40. A gate built on this was evaluated
+and narrowly missed its adoption threshold; see "What the evaluation changed" above.
+
+**Known false-positive mode: co-failures.** Most failures behind the flaky flags happened in runs
+where most other jobs failed too, typically a broken commit or PR. The analyzer still counts those.
+Dropping them was tested and rejected because confirmed-flaky jobs co-fail too (runner and network
+problems hit several jobs at once). A better signal would use re-run outcomes directly.
 
 **Savings here are literal, not modeled:** for both flaky and chronic jobs, the
 "savings" is the actual measured compute time consumed by the observed *failing*
