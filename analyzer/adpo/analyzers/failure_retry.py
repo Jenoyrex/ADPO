@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from ..models import Confidence, EstimatedSavings, Finding, Severity, WorkflowRun
+from ..stats_utils import jeffreys_lower_bound
 from .base import BaseAnalyzer
 
 
@@ -33,6 +34,13 @@ class FailureRetryConfig:
     flaky_max_rate: float = 0.85
     chronic_failure_rate: float = 0.85
     min_retry_incidents_for_finding: int = 1
+    # Small-sample gate for the *flaky* classification (chronic failures are unaffected).
+    # A job is only called flaky with >= flaky_min_runs conclusive runs AND a Jeffreys-posterior
+    # lower bound (this quantile; 0.05 = one-sided 95%) at or above flaky_min_rate. Both values come
+    # from research/REPORT.md section e; set flaky_credible_lower_quantile=None and
+    # flaky_min_runs=min_sample_size to get the pre-evaluation behaviour back.
+    flaky_min_runs: int = 40
+    flaky_credible_lower_quantile: Optional[float] = 0.05
 
 
 class FailureRetryAnalyzer(BaseAnalyzer):
@@ -92,6 +100,14 @@ class FailureRetryAnalyzer(BaseAnalyzer):
                 continue
 
             is_chronic = rate >= cfg.chronic_failure_rate
+            lower_bound = None
+            if not is_chronic:
+                if total < cfg.flaky_min_runs:
+                    continue
+                if cfg.flaky_credible_lower_quantile is not None:
+                    lower_bound = jeffreys_lower_bound(s["failure"], total, cfg.flaky_credible_lower_quantile)
+                    if lower_bound < cfg.flaky_min_rate:
+                        continue
             classification = "chronic_failure" if is_chronic else "flaky"
             confidence = self._confidence(total)
             severity = self._severity(rate, is_chronic)
@@ -104,6 +120,11 @@ class FailureRetryAnalyzer(BaseAnalyzer):
                 f"conclusive outcome (failure rate {rate * 100:.0f}%).",
                 f"Example failing run IDs: {', '.join(f_run_ids[:5])}" + (" ..." if len(f_run_ids) > 5 else ""),
             ]
+            if lower_bound is not None:
+                evidence.append(
+                    f"Even allowing for sample size, the failure rate is at least {lower_bound * 100:.1f}% "
+                    f"(one-sided {100 * (1 - cfg.flaky_credible_lower_quantile or 0):.0f}% Jeffreys credible bound)."
+                )
             if fail_durations:
                 sorted_fd = sorted(fail_durations)
                 evidence.append(
@@ -168,6 +189,7 @@ class FailureRetryAnalyzer(BaseAnalyzer):
                         "failures": s["failure"],
                         "successes": s["success"],
                         "failure_rate": round(rate, 3),
+                        "failure_rate_credible_lower_bound": round(lower_bound, 3) if lower_bound is not None else None,
                     },
                     severity=severity,
                     confidence=confidence,
