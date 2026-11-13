@@ -121,10 +121,9 @@ class FailureRetryAnalyzer(BaseAnalyzer):
                 f"Example failing run IDs: {', '.join(f_run_ids[:5])}" + (" ..." if len(f_run_ids) > 5 else ""),
             ]
             if lower_bound is not None:
-                level = 100 * (1 - (cfg.flaky_credible_lower_quantile or 0.0))
                 evidence.append(
                     f"Even allowing for sample size, the failure rate is at least {lower_bound * 100:.1f}% "
-                    f"(one-sided {level:.0f}% Jeffreys credible bound)."
+                    f"(one-sided {100 * (1 - cfg.flaky_credible_lower_quantile or 0):.0f}% Jeffreys credible bound)."
                 )
             if fail_durations:
                 sorted_fd = sorted(fail_durations)
